@@ -1,79 +1,164 @@
-# AI Project Estimator
+# Esti-Mate: AI-Powered Project Estimator
 
-An intelligent web application that estimates project work across different phases based on JIRA numbers or project descriptions.
+An intelligent web application that provides accurate project time estimates using AI and JIRA integration. Perfect for software development teams who need realistic project planning.
 
-## Features
+## 🚀 Features
 
-- **Smart Analysis**: Analyzes project complexity based on keywords and description length
-- **Phase Breakdown**: Estimates work for:
-  - Requirements Gathering (15%)
-  - Design & Architecture (20%)
-  - Development & Coding (45%)
-  - Testing & UAT (15%)
-  - Deployment & Production (5%)
-- **Visual Charts**: Interactive doughnut chart showing phase distribution
-- **JIRA Integration**: Optional JIRA number input for tracking
-- **Responsive Design**: Works on desktop and mobile devices
+### Core Estimation
+- **AI-Powered Analysis**: Uses Azure OpenAI to analyze project complexity and provide intelligent estimates
+- **JIRA Integration**: Fetch project details directly from JIRA tickets
+- **Phase Selection**: Choose specific project phases (Requirements, Design, Development, Testing, Deployment)
+- **Smart Complexity Detection**: Specialized algorithms for React Native, mobile development, and enterprise projects
 
-## Installation
+### Advanced Capabilities
+- **React Native Expertise**: Accurate estimates for RN upgrades, native migrations, and dependency updates
+- **Visual Analytics**: Interactive charts showing phase breakdown and time distribution
+- **Risk Assessment**: AI identifies potential risk factors and provides confidence ratings
+- **Flexible Workflows**: Rule-based fallback when AI is unavailable
 
-1. Install Python 3.7 or higher
-2. Install dependencies:
+### AI Workflow (Beta)
+- **Solution Design Generation**: AI creates technical designs from JIRA requirements
+- **Code Generation**: Automated code generation from approved designs
+- **Codebase Analysis**: Analyze existing codebases for tech stack and patterns
+
+## 📋 Prerequisites
+
+- Python 3.7 or higher
+- Azure OpenAI API access (optional, for AI features)
+- JIRA API token (optional, for JIRA integration)
+
+## 🛠️ Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/rithik1007/Esti-Mate.git
+   cd Esti-Mate
+   ```
+
+2. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-## Usage
+3. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your credentials
+   ```
 
-1. Start the application:
+4. **Run the application**
    ```bash
    python app.py
    ```
 
-2. Open your browser and go to `http://localhost:5000`
+5. **Access the app**
+   Open `http://localhost:5000` in your browser
 
-3. Enter your project details:
-   - JIRA Number (optional)
-   - Project Description (required)
+## ⚙️ Configuration
 
-4. Click "Generate Estimate" to get your project estimation
+Create a `.env` file with your credentials:
 
-## Project Structure
+```env
+# JIRA Configuration
+JIRA_BASE_URL=https://your-company.atlassian.net
+JIRA_EMAIL=your-email@company.com
+JIRA_API_TOKEN=your-jira-api-token
+
+# Azure OpenAI Configuration
+AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-api-key
+
+# Flask Configuration
+SECRET_KEY=your-secret-key
+```
+
+## 🎯 Usage
+
+### Basic Estimation
+1. Enter a JIRA ticket number OR project description
+2. Select phases you want to include
+3. Choose AI-powered or rule-based estimation
+4. Get detailed breakdown with visual charts
+
+### AI Workflow
+1. Navigate to "AI-Powered Workflow"
+2. Generate solution designs from JIRA tickets
+3. Get approval workflows for technical designs
+4. Generate code from approved designs
+
+## 📊 Estimation Accuracy
+
+### React Native Projects
+- **Minor upgrades (0.76.x → 0.77.x)**: 120-200 hours
+- **Major upgrades (0.76.x → 0.79.x)**: 200-400 hours
+- **Objective-C to Swift migration**: 80-200 hours per module
+- **Native dependency updates**: 60-150 hours
+
+### General Projects
+- **Low Complexity**: 40-80 hours
+- **Medium Complexity**: 80-160 hours
+- **High Complexity**: 160-400+ hours
+
+## 🏗️ Project Structure
 
 ```
-ai-project-estimator/
-├── app.py              # Main Flask application
-├── requirements.txt    # Python dependencies
-├── README.md          # This file
-├── templates/
-│   └── index.html     # Main web interface
-└── static/
-    ├── style.css      # CSS styles
-    └── script.js      # JavaScript functionality
+Esti-Mate/
+├── app.py                          # Main Flask application
+├── requirements.txt                # Python dependencies
+├── .env.example                   # Environment template
+├── ai_modules/                    # AI-powered modules
+│   ├── ai_estimator.py           # Core AI estimation logic
+│   ├── design_generator/         # Solution design generation
+│   ├── code_generator/           # AI code generation
+│   └── repo_analyzer/            # Codebase analysis
+├── templates/                     # HTML templates
+│   ├── index.html               # Main estimation interface
+│   └── ai_workflow.html         # AI workflow interface
+└── static/                       # CSS, JS, and assets
+    ├── style.css
+    └── script.js
 ```
 
-## Complexity Analysis
+## 🤖 AI Features
 
-The system analyzes project complexity based on:
+- **Intelligent Analysis**: Context-aware estimation based on project type
+- **Risk Assessment**: Identifies potential blockers and complications
+- **Confidence Scoring**: AI provides confidence levels for estimates
+- **Specialized Knowledge**: Expert-level understanding of React Native, mobile development
 
-- **High Complexity Keywords**: integration, api, database, migration, security, authentication, microservice, complex, multiple systems
-- **Medium Complexity Keywords**: crud, form, validation, report, dashboard, ui, frontend, backend
-- **Description Length**: Longer descriptions indicate higher complexity
+## 🔧 API Endpoints
 
-## Estimation Logic
+- `POST /estimate` - Generate project estimates
+- `POST /generate-design` - Create solution designs
+- `POST /generate-code` - Generate code from designs
+- `POST /analyze-codebase` - Analyze existing codebases
+- `GET /test-ai` - Test AI connectivity
 
-- **Low Complexity**: 40 base hours
-- **Medium Complexity**: 80 base hours  
-- **High Complexity**: 160 base hours
+## 🚧 Roadmap
 
-Hours are distributed across phases using predefined weights.
+- [ ] Machine learning model training on historical data
+- [ ] Integration with more project management tools
+- [ ] Team velocity and capacity planning
+- [ ] Export to PDF/Excel
+- [ ] Historical estimation accuracy tracking
+- [ ] Multi-language support
 
-## Future Enhancements
+## 🤝 Contributing
 
-- Database integration for storing estimates
-- JIRA API integration for automatic ticket analysis
-- Machine learning model for improved accuracy
-- Team velocity considerations
-- Historical data analysis
-- Export functionality (PDF, Excel)
-- User authentication and project management
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙋‍♂️ Support
+
+For questions or issues, please open a GitHub issue or contact the maintainers.
+
+---
+
+**Built with ❤️ for accurate project estimation**
