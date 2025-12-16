@@ -85,9 +85,9 @@ class ProjectEstimator:
         self.phase_weights = {
             'requirements': 0.15,
             'design': 0.20,
-            'development': 0.45,
+            'development': 0.48,
             'testing': 0.15,
-            'deployment': 0.05
+            'deployment': 0.02
         }
     
     def estimate_project(self, description, jira_number=None, jira_data=None):

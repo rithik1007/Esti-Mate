@@ -118,6 +118,10 @@ function showErrorModal(title, message) {
 }
 
 function displayResults(data) {
+    // Clear any existing AI analysis and risk factor sections
+    const existingAlerts = document.getElementById('results').querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
     // Update basic info
     document.getElementById('resultJira').textContent = data.jira_number || 'N/A';
     document.getElementById('resultComplexity').textContent = data.complexity;
@@ -177,17 +181,6 @@ function displayResults(data) {
     
     // Create chart
     createChart(phases, hours, colors);
-    
-    // Show AI reasoning if available
-    if (data.ai_reasoning) {
-        const reasoningDiv = document.createElement('div');
-        reasoningDiv.className = 'alert alert-info mt-3';
-        reasoningDiv.innerHTML = `
-            <h6><i class="bi bi-lightbulb"></i> AI Analysis:</h6>
-            <p class="mb-0">${data.ai_reasoning}</p>
-        `;
-        document.getElementById('results').appendChild(reasoningDiv);
-    }
     
     // Show risk factors if available
     if (data.risk_factors && data.risk_factors.length > 0) {
