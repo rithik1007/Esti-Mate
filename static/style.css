@@ -1,0 +1,83 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.badge {
+    font-size: 0.875em;
+}
+
+.badge.Low {
+    background-color: #28a745;
+}
+
+.badge.Medium {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge.High {
+    background-color: #dc3545;
+}
+
+.badge.priority-critical,
+.badge.priority-highest {
+    background-color: #dc3545;
+}
+
+.badge.priority-high,
+.badge.priority-major {
+    background-color: #fd7e14;
+}
+
+.badge.priority-medium {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge.priority-low,
+.badge.priority-lowest {
+    background-color: #28a745;
+}
+
+#estimateChart {
+    max-height: 300px;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+.phase-row {
+    transition: background-color 0.2s ease;
+}
+
+.phase-row:hover {
+    background-color: #f8f9fa;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}

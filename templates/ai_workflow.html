@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Development Workflow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4">AI-Powered Development Workflow</h1>
+                
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs" id="workflowTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="design-tab" data-bs-toggle="tab" data-bs-target="#design" type="button">
+                            <i class="bi bi-lightbulb"></i> Generate Design
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="approval-tab" data-bs-toggle="tab" data-bs-target="#approval" type="button">
+                            <i class="bi bi-check-circle"></i> Design Approval
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="code-tab" data-bs-toggle="tab" data-bs-target="#code" type="button">
+                            <i class="bi bi-code-slash"></i> Generate Code
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="analyze-tab" data-bs-toggle="tab" data-bs-target="#analyze" type="button">
+                            <i class="bi bi-search"></i> Analyze Codebase
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Tab Content -->
+                <div class="tab-content" id="workflowTabContent">
+                    
+                    <!-- Design Generation Tab -->
+                    <div class="tab-pane fade show active" id="design" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="bi bi-lightbulb"></i> AI Solution Design Generator</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="designForm">
+                                    <div class="mb-3">
+                                        <label for="ticketKey" class="form-label">JIRA Ticket Key</label>
+                                        <input type="text" class="form-control" id="ticketKey" placeholder="e.g., PROJ-123" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="repoPath" class="form-label">Repository Path (Optional)</label>
+                                        <input type="text" class="form-control" id="repoPath" placeholder="C:\\path\\to\\your\\repository">
+                                        <div class="form-text">Provide repository path for better context-aware design</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="approvers" class="form-label">Approvers</label>
+                                        <input type="text" class="form-control" id="approvers" value="tech_lead,architect" placeholder="comma,separated,approvers">
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-gear"></i> Generate AI Design
+                                    </button>
+                                </form>
+                                
+                                <div id="designResults" class="mt-4" style="display: none;">
+                                    <h6>Generated Design:</h6>
+                                    <div id="designContent" class="border p-3 bg-light"></div>
+                                    <div class="mt-3">
+                                        <strong>Approval ID:</strong> <span id="approvalId" class="badge bg-info"></span>
+                                        <span class="badge bg-warning ms-2">Pending Approval</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Design Approval Tab -->
+                    <div class="tab-pane fade" id="approval" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="bi bi-check-circle"></i> Design Approval Workflow</h5>
+                            </div>
+                            <div class="card-body">
+                                <button class="btn btn-outline-primary mb-3" onclick="loadPendingDesigns()">
+                                    <i class="bi bi-refresh"></i> Load Pending Designs
+                                </button>
+                                
+                                <div id="pendingDesigns">
+                                    <p class="text-muted">Click "Load Pending Designs" to see designs awaiting approval</p>
+                                </div>
+                                
+                                <!-- Approval Form -->
+                                <div id="approvalForm" style="display: none;">
+                                    <hr>
+                                    <h6>Review Design</h6>
+                                    <form id="reviewForm">
+                                        <input type="hidden" id="reviewApprovalId">
+                                        
+                                        <div class="mb-3">
+                                            <label for="reviewerName" class="form-label">Your Name</label>
+                                            <input type="text" class="form-control" id="reviewerName" required>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="reviewComment" class="form-label">Review Comments</label>
+                                            <textarea class="form-control" id="reviewComment" rows="3"></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="approvalDecision" id="approveDesign" value="true">
+                                                <label class="form-check-label text-success" for="approveDesign">
+                                                    <i class="bi bi-check-circle"></i> Approve Design
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="approvalDecision" id="requestChanges" value="false">
+                                                <label class="form-check-label text-warning" for="requestChanges">
+                                                    <i class="bi bi-exclamation-triangle"></i> Request Changes
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-success">Submit Review</button>
+                                        <button type="button" class="btn btn-secondary" onclick="hideApprovalForm()">Cancel</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Code Generation Tab -->
+                    <div class="tab-pane fade" id="code" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="bi bi-code-slash"></i> AI Code Generator</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="codeGenForm">
+                                    <div class="mb-3">
+                                        <label for="codeApprovalId" class="form-label">Approved Design ID</label>
+                                        <input type="text" class="form-control" id="codeApprovalId" placeholder="design_PROJ-123_0" required>
+                                        <div class="form-text">Enter the approval ID from an approved design</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="codeRepoPath" class="form-label">Repository Path</label>
+                                        <input type="text" class="form-control" id="codeRepoPath" placeholder="C:\\path\\to\\your\\repository">
+                                        <div class="form-text">Repository path for context-aware code generation</div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-magic"></i> Generate Code
+                                    </button>
+                                </form>
+                                
+                                <div id="codeResults" class="mt-4" style="display: none;">
+                                    <h6>Generated Code Snippets:</h6>
+                                    <div id="codeContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Codebase Analysis Tab -->
+                    <div class="tab-pane fade" id="analyze" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="bi bi-search"></i> Codebase Analyzer</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="analyzeForm">
+                                    <div class="mb-3">
+                                        <label for="analyzeRepoPath" class="form-label">Repository Path</label>
+                                        <input type="text" class="form-control" id="analyzeRepoPath" placeholder="C:\\path\\to\\your\\repository" required>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-info">
+                                        <i class="bi bi-search"></i> Analyze Codebase
+                                    </button>
+                                </form>
+                                
+                                <div id="analysisResults" class="mt-4" style="display: none;">
+                                    <h6>Codebase Analysis:</h6>
+                                    <div id="analysisContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='ai_workflow.js') }}"></script>
+</body>
+</html>
