@@ -83,6 +83,28 @@ class AIEstimator:
             - Status: {jira_data.get('status', 'Unknown')}
             - Summary: {jira_data.get('summary', '')}
             """
+            
+            # Add labels if available
+            if jira_data.get('labels'):
+                context += f"\n            - Labels: {', '.join(jira_data['labels'])}"
+            
+            # Add fix versions if available
+            if jira_data.get('fix_versions'):
+                versions = [v['name'] for v in jira_data['fix_versions']]
+                context += f"\n            - Fix Versions: {', '.join(versions)}"
+            
+            # Add linked issues if available
+            if jira_data.get('linked_issues'):
+                linked_info = [f"{link['key']} ({link['type']})" for link in jira_data['linked_issues']]
+                context += f"\n            - Linked Issues: {', '.join(linked_info)}"
+            
+            # Add recent comments if available
+            if jira_data.get('comments'):
+                recent_comments = jira_data['comments'][-2:]  # Last 2 comments
+                context += "\n            - Recent Comments:"
+                for comment in recent_comments:
+                    comment_text = comment['body'][:150] + "..." if len(comment['body']) > 150 else comment['body']
+                    context += f"\n              * {comment['author']}: {comment_text}"
         
         context += """
         
@@ -250,6 +272,55 @@ class AIEstimator:
                 'deployment': 1
             }
             estimation['reasoning'] = f"BlackDuck security ticket - capped at 32 hours. {estimation.get('reasoning', '')}"
+        
+        # Apply status-based phase filtering
+        estimation = self._apply_status_based_filtering(estimation, jira_data)
+        
+        return estimation
+    
+    def _apply_status_based_filtering(self, estimation: Dict, jira_data: Dict = None) -> Dict:
+        """Filter phases based on JIRA ticket status"""
+        
+        if not jira_data or 'status' not in jira_data:
+            return estimation
+        
+        status = jira_data.get('status', '').lower()
+        phases = estimation.get('phases', {})
+        
+        # Define status-to-phase mapping
+        if status in ['qa', 'sit', 'testing', 'ready for testing', 'in testing']:
+            # Only testing and deployment remain
+            phases['requirements'] = 0
+            phases['design'] = 0
+            phases['development'] = 0
+            estimation['reasoning'] += f" Ticket in {status} - only testing and deployment phases remain."
+            
+        elif status in ['uat', 'user acceptance testing', 'ready for deployment', 'staging']:
+            # Only deployment remains
+            phases['requirements'] = 0
+            phases['design'] = 0
+            phases['development'] = 0
+            phases['testing'] = 0
+            estimation['reasoning'] += f" Ticket in {status} - only deployment phase remains."
+            
+        elif status in ['done', 'closed', 'resolved', 'deployed', 'production']:
+            # All phases complete
+            phases['requirements'] = 0
+            phases['design'] = 0
+            phases['development'] = 0
+            phases['testing'] = 0
+            phases['deployment'] = 0
+            estimation['reasoning'] += f" Ticket {status} - no remaining work."
+            
+        elif status in ['in progress', 'development', 'coding', 'in development']:
+            # Requirements and design likely complete
+            phases['requirements'] = 0
+            phases['design'] = 0
+            estimation['reasoning'] += f" Ticket in {status} - requirements and design phases complete."
+        
+        # Recalculate total hours
+        estimation['total_hours'] = sum(phases.values())
+        estimation['phases'] = phases
         
         return estimation
     
@@ -446,6 +517,9 @@ class AIEstimator:
         
         # Apply BlackDuck capping if needed
         result = self._apply_blackduck_capping(result, jira_data)
+        
+        # Apply status-based phase filtering
+        result = self._apply_status_based_filtering(result, jira_data)
         
         # Calculate reliable confidence
         result['confidence'] = self._calculate_reliable_confidence(result, jira_data)

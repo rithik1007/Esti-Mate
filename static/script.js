@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const useJira = document.getElementById('useJira').checked;
         const useAI = document.getElementById('useAI').checked;
         
-        // Get selected phases
+        // Get selected phases with custom percentages
         const selectedPhases = {
             requirements: document.getElementById('includeRequirements').checked,
             design: document.getElementById('includeDesign').checked,
@@ -19,6 +19,41 @@ document.addEventListener('DOMContentLoaded', function() {
             testing: document.getElementById('includeTesting').checked,
             deployment: document.getElementById('includeDeployment').checked
         };
+        
+        const phasePercentages = {
+            requirements: parseInt(document.getElementById('requirementsPercent').value) || 0,
+            design: parseInt(document.getElementById('designPercent').value) || 0,
+            development: parseInt(document.getElementById('developmentPercent').value) || 0,
+            testing: parseInt(document.getElementById('testingPercent').value) || 0,
+            deployment: parseInt(document.getElementById('deploymentPercent').value) || 0
+        };
+        
+        // Get custom phases
+        const customPhases = {};
+        const customPhaseRows = document.querySelectorAll('.custom-phase-row');
+        customPhaseRows.forEach((row, index) => {
+            const checkbox = row.querySelector('input[type="checkbox"]');
+            const nameInput = row.querySelector('.custom-phase-name');
+            const percentInput = row.querySelector('.custom-phase-percent');
+            
+            if (checkbox.checked && nameInput.value.trim()) {
+                const phaseName = nameInput.value.trim().toLowerCase().replace(/\s+/g, '_');
+                selectedPhases[phaseName] = true;
+                phasePercentages[phaseName] = parseInt(percentInput.value) || 0;
+                customPhases[phaseName] = nameInput.value.trim();
+            }
+        });
+        
+        // Validate total percentage doesn't exceed 100%
+        let totalPercent = 0;
+        Object.values(phasePercentages).forEach(percent => {
+            totalPercent += percent;
+        });
+        
+        if (totalPercent > 100) {
+            showErrorModal('Validation Error', 'Total phase percentages cannot exceed 100%. Current total: ' + totalPercent + '%');
+            return;
+        }
         
         if (useJira && !jiraNumber.trim()) {
             showErrorModal('Validation Error', 'Please enter a JIRA number when using JIRA fetch.');
@@ -45,7 +80,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     description: description,
                     use_jira: useJira,
                     use_ai: useAI,
-                    selected_phases: selectedPhases
+                    selected_phases: selectedPhases,
+                    phase_percentages: phasePercentages,
+                    custom_phases: customPhases
                 })
             });
             
@@ -65,6 +102,76 @@ document.addEventListener('DOMContentLoaded', function() {
             loading.style.display = 'none';
         }
     });
+    
+    // Add real-time percentage calculation
+    const percentInputs = ['requirementsPercent', 'designPercent', 'developmentPercent', 'testingPercent', 'deploymentPercent'];
+    
+    percentInputs.forEach(inputId => {
+        document.getElementById(inputId).addEventListener('input', updateTotalPercent);
+    });
+    
+    // Add custom phase functionality
+    let customPhaseCounter = 0;
+    
+    document.getElementById('addCustomPhase').addEventListener('click', function() {
+        customPhaseCounter++;
+        const customPhasesDiv = document.getElementById('customPhases');
+        
+        const phaseDiv = document.createElement('div');
+        phaseDiv.className = 'row mb-2 custom-phase-row';
+        phaseDiv.innerHTML = `
+            <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                    <input class="form-check-input me-2" type="checkbox" id="includeCustom${customPhaseCounter}" checked>
+                    <input type="text" class="form-control form-control-sm me-2 custom-phase-name" 
+                           id="customName${customPhaseCounter}" placeholder="Phase name" style="width: 120px;">
+                    <input type="number" class="form-control form-control-sm custom-phase-percent" 
+                           id="customPercent${customPhaseCounter}" value="0" min="0" max="100" style="width: 70px;">
+                    <span class="ms-1 me-2">%</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-custom-phase">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        customPhasesDiv.appendChild(phaseDiv);
+        
+        // Add event listeners
+        phaseDiv.querySelector('.custom-phase-percent').addEventListener('input', updateTotalPercent);
+        phaseDiv.querySelector('.remove-custom-phase').addEventListener('click', function() {
+            phaseDiv.remove();
+            updateTotalPercent();
+        });
+        
+        updateTotalPercent();
+    });
+    
+    function updateTotalPercent() {
+        let total = 0;
+        percentInputs.forEach(inputId => {
+            const value = parseInt(document.getElementById(inputId).value) || 0;
+            total += value;
+        });
+        
+        // Add custom phase percentages
+        const customInputs = document.querySelectorAll('.custom-phase-percent');
+        customInputs.forEach(input => {
+            total += parseInt(input.value) || 0;
+        });
+        
+        const totalSpan = document.getElementById('totalPercent');
+        totalSpan.textContent = total;
+        
+        // Color coding for total
+        if (total === 100) {
+            totalSpan.className = 'fw-bold text-success';
+        } else if (total > 100) {
+            totalSpan.className = 'fw-bold text-danger';
+        } else {
+            totalSpan.className = 'fw-bold text-warning';
+        }
+    }
 });
 
 function getErrorTitle(errorType, statusCode) {
@@ -159,6 +266,11 @@ function displayResults(data) {
         'testing': 'Testing & UAT',
         'deployment': 'Deployment & Production'
     };
+    
+    // Add custom phase names if available
+    if (data.custom_phase_names) {
+        Object.assign(phaseNames, data.custom_phase_names);
+    }
     
     const phases = [];
     const hours = [];

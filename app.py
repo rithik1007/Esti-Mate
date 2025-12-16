@@ -62,13 +62,57 @@ class JiraClient:
             raise Exception(f"JIRA server error ({response.status_code}). Please try again later or contact your JIRA administrator.")
         
         data = response.json()
+        
+        # Extract comments
+        comments = []
+        if 'comment' in data['fields'] and data['fields']['comment']['comments']:
+            for comment in data['fields']['comment']['comments']:
+                comments.append({
+                    'author': comment['author']['displayName'],
+                    'body': comment['body'],
+                    'created': comment['created']
+                })
+        
+        # Extract labels
+        labels = data['fields'].get('labels', [])
+        
+        # Extract linked issues
+        linked_issues = []
+        if 'issuelinks' in data['fields']:
+            for link in data['fields']['issuelinks']:
+                if 'outwardIssue' in link:
+                    linked_issues.append({
+                        'key': link['outwardIssue']['key'],
+                        'summary': link['outwardIssue']['fields']['summary'],
+                        'type': link['type']['outward']
+                    })
+                if 'inwardIssue' in link:
+                    linked_issues.append({
+                        'key': link['inwardIssue']['key'],
+                        'summary': link['inwardIssue']['fields']['summary'],
+                        'type': link['type']['inward']
+                    })
+        
+        # Extract fix versions
+        fix_versions = []
+        if 'fixVersions' in data['fields']:
+            for version in data['fields']['fixVersions']:
+                fix_versions.append({
+                    'name': version['name'],
+                    'released': version.get('released', False)
+                })
+        
         return {
             'key': data['key'],
             'summary': data['fields']['summary'],
             'description': data['fields'].get('description', ''),
             'issue_type': data['fields']['issuetype']['name'],
             'priority': data['fields'].get('priority', {}).get('name', 'Medium'),
-            'status': data['fields']['status']['name']
+            'status': data['fields']['status']['name'],
+            'comments': comments,
+            'labels': labels,
+            'linked_issues': linked_issues,
+            'fix_versions': fix_versions
         }
 
 jira_client = JiraClient()
@@ -279,6 +323,16 @@ def estimate():
             'deployment': True
         })
         
+        phase_percentages = data.get('phase_percentages', {
+            'requirements': 15,
+            'design': 20,
+            'development': 48,
+            'testing': 15,
+            'deployment': 2
+        })
+        
+        custom_phases = data.get('custom_phases', {})
+        
         print(f"DEBUG - AI Estimation requested: {use_ai}")
         print(f"DEBUG - Azure API key configured: {bool(os.getenv('AZURE_OPENAI_API_KEY'))}")
         
@@ -287,13 +341,42 @@ def estimate():
             # Use AI estimation
             ai_result = ai_estimator.estimate_with_ai(description, jira_data)
             
-            # Filter phases based on selection
-            filtered_phases = {}
-            total_filtered_hours = 0
-            for phase, hours in ai_result.get('phases', {}).items():
-                if selected_phases.get(phase, True):
-                    filtered_phases[phase] = hours
-                    total_filtered_hours += hours
+            # Check if status filtering should override custom percentages
+            status = jira_data.get('status', '').lower() if jira_data else ''
+            status_override = status in ['qa', 'sit', 'testing', 'ready for testing', 'in testing', 'uat', 'user acceptance testing', 'ready for deployment', 'staging', 'done', 'closed', 'resolved', 'deployed', 'production', 'in progress', 'development', 'coding', 'in development']
+            
+            if status_override:
+                print(f"DEBUG - Status '{status}' detected, applying status-based filtering instead of custom percentages")
+                # Apply status filtering to AI result first
+                ai_result = ai_estimator._apply_status_based_filtering(ai_result, jira_data)
+                filtered_phases = ai_result.get('phases', {})
+                total_filtered_hours = ai_result.get('total_hours', 0)
+            else:
+                # Apply custom percentages and filter phases
+                base_total = ai_result.get('total_hours', 80)
+                print(f"DEBUG - AI base total hours: {base_total}")
+                print(f"DEBUG - Phase percentages: {phase_percentages}")
+                
+                filtered_phases = {}
+                total_filtered_hours = 0
+                
+                # Process standard phases
+                for phase in ['requirements', 'design', 'development', 'testing', 'deployment']:
+                    if selected_phases.get(phase, True):
+                        custom_hours = round(base_total * (phase_percentages.get(phase, 0) / 100), 1)
+                        print(f"DEBUG - {phase}: {phase_percentages.get(phase, 0)}% of {base_total} = {custom_hours} hours")
+                        filtered_phases[phase] = custom_hours
+                        total_filtered_hours += custom_hours
+                
+                # Process custom phases
+                for phase_key in custom_phases.keys():
+                    if selected_phases.get(phase_key, True):
+                        custom_hours = round(base_total * (phase_percentages.get(phase_key, 0) / 100), 1)
+                        print(f"DEBUG - {phase_key}: {phase_percentages.get(phase_key, 0)}% of {base_total} = {custom_hours} hours")
+                        filtered_phases[phase_key] = custom_hours
+                        total_filtered_hours += custom_hours
+                
+                print(f"DEBUG - Total filtered hours: {total_filtered_hours}")
             
             # Format result to match existing structure
             estimate_result = {
@@ -306,7 +389,8 @@ def estimate():
                 'estimation_method': ai_result.get('estimation_method', 'ai_powered'),
                 'ai_confidence': ai_result.get('confidence', 75),
                 'ai_reasoning': ai_result.get('reasoning', ''),
-                'risk_factors': ai_result.get('risk_factors', [])
+                'risk_factors': ai_result.get('risk_factors', []),
+                'custom_phase_names': custom_phases
             }
             
             if jira_data:
@@ -320,17 +404,29 @@ def estimate():
             # Use rule-based estimation
             estimate_result = estimator.estimate_project(description, jira_number, jira_data)
             
-            # Filter phases based on selection
+            # Apply custom percentages and filter phases
+            base_total = estimate_result['total_hours']
             filtered_phases = {}
             total_filtered_hours = 0
-            for phase, hours in estimate_result['phases'].items():
+            
+            # Process standard phases
+            for phase in ['requirements', 'design', 'development', 'testing', 'deployment']:
                 if selected_phases.get(phase, True):
-                    filtered_phases[phase] = hours
-                    total_filtered_hours += hours
+                    custom_hours = round(base_total * (phase_percentages.get(phase, 0) / 100), 1)
+                    filtered_phases[phase] = custom_hours
+                    total_filtered_hours += custom_hours
+            
+            # Process custom phases
+            for phase_key in custom_phases.keys():
+                if selected_phases.get(phase_key, True):
+                    custom_hours = round(base_total * (phase_percentages.get(phase_key, 0) / 100), 1)
+                    filtered_phases[phase_key] = custom_hours
+                    total_filtered_hours += custom_hours
             
             estimate_result['phases'] = filtered_phases
             estimate_result['total_hours'] = total_filtered_hours
             estimate_result['estimation_method'] = 'rule_based'
+            estimate_result['custom_phase_names'] = custom_phases
         
         return jsonify(estimate_result)
     except Exception as e:

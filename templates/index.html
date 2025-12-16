@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Project Estimator</title>
+    <title>Esti-Mate</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -12,7 +12,7 @@
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <h1 class="text-center mb-4">AI Project Estimator</h1>
+                <h1 class="text-center mb-4">Esti-Mate</h1>
                 
                 <div class="text-center mb-4">
                     <a href="/ai-workflow" class="btn btn-outline-primary">
@@ -52,44 +52,63 @@
                             </div>
                             
                             <div class="mb-3">
-                                <label class="form-label">Select Phases to Include:</label>
+                                <label class="form-label">Customize Phase Distribution:</label>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input phase-checkbox" type="checkbox" id="includeRequirements" checked>
-                                            <label class="form-check-label" for="includeRequirements">
-                                                Requirements Gathering (15%)
-                                            </label>
+                                        <div class="mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <input class="form-check-input me-2" type="checkbox" id="includeRequirements" checked>
+                                                <label class="form-label me-2 mb-0" for="includeRequirements">Requirements:</label>
+                                                <input type="number" class="form-control form-control-sm" id="requirementsPercent" value="15" min="0" max="100" style="width: 70px;">
+                                                <span class="ms-1">%</span>
+                                            </div>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input phase-checkbox" type="checkbox" id="includeDesign" checked>
-                                            <label class="form-check-label" for="includeDesign">
-                                                Design & Architecture (20%)
-                                            </label>
+                                        <div class="mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <input class="form-check-input me-2" type="checkbox" id="includeDesign" checked>
+                                                <label class="form-label me-2 mb-0" for="includeDesign">Design:</label>
+                                                <input type="number" class="form-control form-control-sm" id="designPercent" value="20" min="0" max="100" style="width: 70px;">
+                                                <span class="ms-1">%</span>
+                                            </div>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input phase-checkbox" type="checkbox" id="includeDevelopment" checked>
-                                            <label class="form-check-label" for="includeDevelopment">
-                                                Development & Coding (48%)
-                                            </label>
+                                        <div class="mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <input class="form-check-input me-2" type="checkbox" id="includeDevelopment" checked>
+                                                <label class="form-label me-2 mb-0" for="includeDevelopment">Development:</label>
+                                                <input type="number" class="form-control form-control-sm" id="developmentPercent" value="48" min="0" max="100" style="width: 70px;">
+                                                <span class="ms-1">%</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input phase-checkbox" type="checkbox" id="includeTesting" checked>
-                                            <label class="form-check-label" for="includeTesting">
-                                                Testing & UAT (15%)
-                                            </label>
+                                        <div class="mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <input class="form-check-input me-2" type="checkbox" id="includeTesting" checked>
+                                                <label class="form-label me-2 mb-0" for="includeTesting">Testing:</label>
+                                                <input type="number" class="form-control form-control-sm" id="testingPercent" value="15" min="0" max="100" style="width: 70px;">
+                                                <span class="ms-1">%</span>
+                                            </div>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input phase-checkbox" type="checkbox" id="includeDeployment" checked>
-                                            <label class="form-check-label" for="includeDeployment">
-                                                Deployment & Production (2%)
-                                            </label>
+                                        <div class="mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <input class="form-check-input me-2" type="checkbox" id="includeDeployment" checked>
+                                                <label class="form-label me-2 mb-0" for="includeDeployment">Deployment:</label>
+                                                <input type="number" class="form-control form-control-sm" id="deploymentPercent" value="2" min="0" max="100" style="width: 70px;">
+                                                <span class="ms-1">%</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">Total: <span id="totalPercent" class="fw-bold">100</span>%</small>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-text">Uncheck phases you don't need to get a more accurate estimate</div>
+                                <div id="customPhases"></div>
+                                <div class="mt-2">
+                                    <button type="button" id="addCustomPhase" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-plus"></i> Add Custom Phase
+                                    </button>
+                                </div>
+                                <div class="form-text">Customize percentages for each phase. Uncheck phases you don't need.</div>
                             </div>
                             
                             <button type="submit" class="btn btn-primary w-100">Generate Estimate</button>
