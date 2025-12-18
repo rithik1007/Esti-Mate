@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const description = document.getElementById('description').value;
         const useJira = document.getElementById('useJira').checked;
         const useAI = document.getElementById('useAI').checked;
+        const usesAITools = document.getElementById('usesAITools').checked;
         
         // Get selected phases with custom percentages
         const selectedPhases = {
@@ -41,8 +42,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectedPhases[phaseName] = true;
                 phasePercentages[phaseName] = parseInt(percentInput.value) || 0;
                 customPhases[phaseName] = nameInput.value.trim();
+                console.log(`DEBUG - Custom phase added: ${phaseName} = ${nameInput.value.trim()} (${percentInput.value}%)`);
             }
         });
+        
+        console.log('DEBUG - Final custom phases:', customPhases);
+        console.log('DEBUG - Final selected phases:', selectedPhases);
+        console.log('DEBUG - Final phase percentages:', phasePercentages);
         
         // Validate total percentage doesn't exceed 100%
         let totalPercent = 0;
@@ -80,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     description: description,
                     use_jira: useJira,
                     use_ai: useAI,
+                    uses_ai_tools: usesAITools,
                     selected_phases: selectedPhases,
                     phase_percentages: phasePercentages,
                     custom_phases: customPhases
@@ -269,30 +276,68 @@ function displayResults(data) {
     
     // Add custom phase names if available
     if (data.custom_phase_names) {
-        Object.assign(phaseNames, data.custom_phase_names);
+        Object.keys(data.custom_phase_names).forEach(key => {
+            phaseNames[key] = data.custom_phase_names[key];
+        });
     }
+    
+    // Add enterprise integration phase names
+    const enterprisePhaseNames = {
+        'iib_integration': 'IIB Integration',
+        'sap_integration': 'SAP Integration', 
+        'mainframe_integration': 'Mainframe Integration',
+        'esb_integration': 'ESB Integration',
+        'system_coordination': 'System Coordination'
+    };
+    Object.assign(phaseNames, enterprisePhaseNames);
     
     const phases = [];
     const hours = [];
-    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#4BC0C0'];
     
-    Object.entries(data.phases).forEach(([phase, phaseHours], index) => {
-        const percentage = ((phaseHours / data.total_hours) * 100).toFixed(1);
-        
-        const row = tbody.insertRow();
-        row.className = 'phase-row';
-        row.innerHTML = `
-            <td><strong>${phaseNames[phase]}</strong></td>
-            <td>${phaseHours} hours</td>
-            <td>${percentage}%</td>
-        `;
-        
-        phases.push(phaseNames[phase]);
-        hours.push(phaseHours);
+    // Define the correct order for phases
+    const phaseOrder = ['requirements', 'design', 'development', 'testing', 'deployment'];
+    
+    // Add any additional phases (enterprise integration, custom phases) after the standard ones
+    const additionalPhases = Object.keys(data.phases).filter(phase => !phaseOrder.includes(phase));
+    const orderedPhases = [...phaseOrder, ...additionalPhases];
+    
+    orderedPhases.forEach((phase, index) => {
+        if (data.phases[phase] !== undefined && data.phases[phase] > 0) {
+            const phaseHours = data.phases[phase];
+            const percentage = ((phaseHours / data.total_hours) * 100).toFixed(1);
+            
+            // Get display name - use custom name if available, otherwise use default mapping, otherwise capitalize the phase key
+            let displayName = phaseNames[phase];
+            if (!displayName) {
+                displayName = phase.charAt(0).toUpperCase() + phase.slice(1).replace(/_/g, ' ');
+            }
+            
+            const row = tbody.insertRow();
+            row.className = 'phase-row';
+            row.innerHTML = `
+                <td><strong>${displayName}</strong></td>
+                <td>${parseFloat(phaseHours).toFixed(2)} hours</td>
+                <td>${parseFloat(percentage).toFixed(1)}%</td>
+            `;
+            
+            phases.push(displayName);
+            hours.push(phaseHours);
+        }
     });
     
     // Create chart
     createChart(phases, hours, colors);
+    
+    // Show JIRA timeline if available
+    if (data.jira_details && data.jira_details.status_history) {
+        displayJiraTimeline(data.jira_details.status_history, data.jira_details.time_in_status);
+    }
+    
+    // Show historical comparison if available
+    if (data.historical_analysis && data.historical_analysis.has_data) {
+        displayHistoricalComparison(data.historical_analysis, data.phases, data.total_hours);
+    }
     
     // Show risk factors if available
     if (data.risk_factors && data.risk_factors.length > 0) {
@@ -312,6 +357,207 @@ function displayResults(data) {
     
     // Scroll to results
     document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function displayJiraTimeline(statusHistory, timeInStatus) {
+    const timelineDiv = document.getElementById('jiraTimeline');
+    const tbody = document.getElementById('timelineBody');
+    const totalCycleTimeSpan = document.getElementById('totalCycleTime');
+    
+    if (!timelineDiv || !tbody || !statusHistory || statusHistory.length === 0) {
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    let totalHours = 0;
+    
+    // Display each status transition
+    statusHistory.forEach((transition, index) => {
+        const fromStatus = transition.from || 'Created';
+        const toStatus = transition.to;
+        const date = new Date(transition.changed_at);
+        const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        
+        // Get time spent in the 'from' status
+        const timeSpent = timeInStatus[fromStatus] || 0;
+        totalHours += timeSpent;
+        
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td><strong>${fromStatus}</strong> → ${toStatus}</td>
+            <td><small>${dateStr}</small></td>
+            <td><span class="badge bg-primary">${timeSpent.toFixed(1)}h</span></td>
+        `;
+    });
+    
+    // Add current status row
+    if (statusHistory.length > 0) {
+        const lastTransition = statusHistory[statusHistory.length - 1];
+        const currentStatus = lastTransition.to;
+        const timeInCurrent = timeInStatus[currentStatus] || 0;
+        totalHours += timeInCurrent;
+        
+        const row = tbody.insertRow();
+        row.className = 'table-success';
+        row.innerHTML = `
+            <td><strong>${currentStatus}</strong> (Current)</td>
+            <td>-</td>
+            <td><span class="badge bg-success">${timeInCurrent.toFixed(1)}h</span></td>
+        `;
+    }
+    
+    // Display total cycle time
+    if (totalCycleTimeSpan) {
+        totalCycleTimeSpan.innerHTML = `<strong>${totalHours.toFixed(1)} hours</strong> (${(totalHours / 8).toFixed(1)} days)`;
+    }
+    
+    timelineDiv.style.display = 'block';
+}
+
+function displayHistoricalComparison(historical, estimatedPhases, totalEstimated) {
+    const comparisonDiv = document.getElementById('historicalComparison');
+    const tbody = document.getElementById('historicalBreakdown');
+    const insightsList = document.getElementById('insightsList');
+    
+    if (!comparisonDiv || !tbody || !insightsList) {
+        console.log('Historical comparison elements not found');
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    insightsList.innerHTML = '';
+    
+    // Map status time to phases
+    const phaseMapping = {
+        'requirements': historical.time_in_analysis || 0,
+        'design': historical.time_in_analysis * 0.3 || 0,
+        'development': historical.time_in_development || 0,
+        'testing': historical.time_in_testing || 0,
+        'deployment': 0
+    };
+    
+    const actualLabels = [];
+    const actualData = [];
+    let hasActualData = false;
+    
+    // Create comparison rows
+    ['requirements', 'design', 'development', 'testing', 'deployment'].forEach(phase => {
+        const estimated = estimatedPhases[phase] || 0;
+        const actual = phaseMapping[phase] || 0;
+        
+        if (estimated > 0 || actual > 0) {
+            const variance = actual > 0 ? ((actual - estimated) / estimated * 100).toFixed(1) : 'N/A';
+            const varianceClass = actual > estimated ? 'text-danger' : actual > 0 ? 'text-success' : '';
+            const varianceIcon = actual > estimated ? '↑' : actual > 0 ? '↓' : '';
+            
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td><strong>${phase.charAt(0).toUpperCase() + phase.slice(1)}</strong></td>
+                <td>${estimated.toFixed(2)}h</td>
+                <td>${actual > 0 ? actual.toFixed(2) + 'h' : '<span class="text-muted">Not started</span>'}</td>
+                <td class="${varianceClass}">${variance !== 'N/A' ? varianceIcon + ' ' + Math.abs(variance) + '%' : variance}</td>
+            `;
+            
+            if (actual > 0) {
+                hasActualData = true;
+                actualLabels.push(phase.charAt(0).toUpperCase() + phase.slice(1));
+                actualData.push(actual);
+            }
+        }
+    });
+    
+    // Add insights
+    if (historical.patterns && historical.patterns.length > 0) {
+        historical.patterns.forEach(pattern => {
+            const li = document.createElement('li');
+            li.textContent = pattern;
+            insightsList.appendChild(li);
+        });
+    }
+    
+    // Add general insights
+    if (historical.status_transitions > 0) {
+        const li = document.createElement('li');
+        li.textContent = `Ticket went through ${historical.status_transitions} status changes`;
+        insightsList.appendChild(li);
+    }
+    
+    if (historical.actual_time_spent > 0) {
+        const li = document.createElement('li');
+        li.textContent = `Total time logged in JIRA: ${historical.actual_time_spent.toFixed(1)} hours`;
+        insightsList.appendChild(li);
+    }
+    
+    if (historical.total_cycle_time > 0) {
+        const li = document.createElement('li');
+        li.textContent = `Total cycle time: ${historical.total_cycle_time.toFixed(1)} hours`;
+        insightsList.appendChild(li);
+    }
+    
+    // Show comparison section
+    comparisonDiv.style.display = 'block';
+    
+    // Create actual time chart if data available
+    if (hasActualData) {
+        const actualContainer = document.getElementById('actualChartContainer');
+        if (actualContainer) {
+            actualContainer.style.display = 'block';
+            createActualChart(actualLabels, actualData);
+        }
+    }
+}
+
+function createActualChart(labels, data) {
+    const canvas = document.getElementById('actualChart');
+    if (!canvas) {
+        console.log('Actual chart canvas not found');
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (window.actualChart && typeof window.actualChart.destroy === 'function') {
+        window.actualChart.destroy();
+    }
+    
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+    
+    window.actualChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value.toFixed(2)} hours (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function createChart(labels, data, colors) {

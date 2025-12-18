@@ -42,12 +42,19 @@
                             </div>
                             
                             <div class="mb-3">
-                                <div class="form-check">
+                                <div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" id="useAI">
                                     <label class="form-check-label" for="useAI">
                                         <i class="bi bi-robot"></i> Use AI-Powered Estimation
                                     </label>
                                     <div class="form-text">Uses OpenAI to analyze complexity and provide intelligent estimates</div>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="usesAITools">
+                                    <label class="form-check-label" for="usesAITools">
+                                        <i class="bi bi-magic"></i> Team Uses AI Development Tools
+                                    </label>
+                                    <div class="form-text">Check if developers use AI tools (GitHub Copilot, ChatGPT, etc.) - reduces estimates by 15-30%</div>
                                 </div>
                             </div>
                             
@@ -143,6 +150,26 @@
                                 </div>
                             </div>
                             
+                            <div id="jiraTimeline" style="display: none;">
+                                <h6 class="mt-3"><i class="bi bi-clock-history"></i> JIRA Status Timeline:</h6>
+                                <div class="timeline-container">
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Status Transition</th>
+                                                <th>Date</th>
+                                                <th>Time Spent</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="timelineBody">
+                                        </tbody>
+                                    </table>
+                                    <div class="alert alert-info mt-2">
+                                        <strong>Total Cycle Time:</strong> <span id="totalCycleTime"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="mb-3">
                                 <strong>Total Estimated Hours:</strong> <span id="totalHours" class="fs-4 text-primary"></span>
                             </div>
@@ -162,8 +189,37 @@
                                 </table>
                             </div>
                             
-                            <div class="mt-3">
-                                <canvas id="estimateChart" width="400" height="200"></canvas>
+                            <div id="historicalComparison" style="display: none;">
+                                <h6 class="mt-4"><i class="bi bi-clock-history"></i> Historical Timeline Analysis:</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Phase</th>
+                                                <th>Estimated Hours</th>
+                                                <th>Actual Time Spent</th>
+                                                <th>Variance</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="historicalBreakdown">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="historicalInsights" class="alert alert-info mt-3">
+                                    <strong><i class="bi bi-lightbulb"></i> Insights:</strong>
+                                    <ul id="insightsList" class="mb-0 mt-2"></ul>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h6 class="text-center">Estimated Distribution</h6>
+                                    <canvas id="estimateChart" width="400" height="200"></canvas>
+                                </div>
+                                <div class="col-md-6" id="actualChartContainer" style="display: none;">
+                                    <h6 class="text-center">Actual Time Spent</h6>
+                                    <canvas id="actualChart" width="400" height="200"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>

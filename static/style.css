@@ -1,11 +1,27 @@
 body {
-    background-color: #f8f9fa;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: 1px solid rgba(0, 0, 0, 0.125);
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px 16px 0 0 !important;
+}
+
+.card-body {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .badge {
@@ -13,16 +29,18 @@ body {
 }
 
 .badge.Low {
-    background-color: #28a745;
+    background: rgba(52, 199, 89, 0.8);
+    color: white;
 }
 
 .badge.Medium {
-    background-color: #ffc107;
-    color: #212529;
+    background: rgba(255, 149, 0, 0.8);
+    color: white;
 }
 
 .badge.High {
-    background-color: #dc3545;
+    background: rgba(255, 59, 48, 0.8);
+    color: white;
 }
 
 .badge.priority-critical,
@@ -67,17 +85,312 @@ body {
     background-color: #f8f9fa;
 }
 
+.form-control {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #1d1d1f;
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+}
+
 .form-control:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #007aff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 122, 255, 0.25);
+    color: #1d1d1f;
+}
+
+.form-control::placeholder {
+    color: rgba(29, 29, 31, 0.6);
 }
 
 .btn-primary {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+    background: rgba(0, 122, 255, 0.8);
+    border: none;
+    backdrop-filter: blur(20px);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.2);
+    color: white;
+    font-weight: 500;
 }
 
 .btn-primary:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
+    background: rgba(0, 122, 255, 0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.3);
+}
+
+.table {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.table th {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: #1d1d1f;
+    font-weight: 600;
+}
+
+.table td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #1d1d1f;
+}
+
+.phase-row:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.alert {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+}
+
+.form-check-input {
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    width: 20px;
+    height: 20px;
+}
+
+.form-check-input:checked {
+    background: #007aff;
+    border-color: #007aff;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+.form-check-input:focus {
+    border-color: #007aff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 122, 255, 0.25);
+}
+
+.form-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #333;
+    backdrop-filter: blur(5px);
+}
+
+.form-select:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(13, 110, 253, 0.5);
+    color: #333;
+}
+
+.navbar {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.navbar-brand, .nav-link {
+    color: white !important;
+}
+
+.text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #1d1d1f;
+    font-weight: 600;
+}
+
+label {
+    color: #1d1d1f;
+    font-weight: 500;
+}
+
+.spinner-border {
+    color: #007aff;
+}
+
+/* Floating glass orbs */
+.container {
+    position: relative;
+    z-index: 1;
+}
+
+.container::after {
+    content: '';
+    position: fixed;
+    top: 10%;
+    right: 10%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    backdrop-filter: blur(20px);
+    animation: float 6s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.container::before {
+    content: '';
+    position: fixed;
+    bottom: 10%;
+    left: 10%;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    backdrop-filter: blur(15px);
+    animation: float 8s ease-in-out infinite reverse;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.badge {
+    backdrop-filter: blur(10px);
+    border-radius: 6px;
+}
+
+.navbar {
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.navbar-brand, .nav-link {
+    color: #1d1d1f !important;
+    font-weight: 500;
+}
+
+.text-muted {
+    color: rgba(29, 29, 31, 0.6) !important;
+}
+
+.alert {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    color: #1d1d1f;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+}
+
+.form-select {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #1d1d1f;
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+}
+
+.form-select:focus {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #007aff;
+    color: #1d1d1f;
+}
+
+
+/* Historical Comparison Styling */
+#historicalComparison {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+#historicalComparison .table-bordered {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+#historicalComparison .table-bordered th,
+#historicalComparison .table-bordered td {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#historicalComparison .table-light {
+    background: rgba(0, 122, 255, 0.1);
+}
+
+#historicalInsights {
+    background: rgba(13, 202, 240, 0.1);
+    border: 1px solid rgba(13, 202, 240, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+#historicalInsights ul {
+    padding-left: 1.5rem;
+}
+
+#historicalInsights li {
+    margin-bottom: 0.5rem;
+}
+
+.text-success {
+    color: #34c759 !important;
+    font-weight: 600;
+}
+
+.text-danger {
+    color: #ff3b30 !important;
+    font-weight: 600;
+}
+
+#actualChartContainer {
+    padding-left: 1rem;
+}
+
+@media (max-width: 768px) {
+    #actualChartContainer {
+        padding-left: 0;
+        margin-top: 2rem;
+    }
+}
+
+
+/* JIRA Timeline Styling */
+#jiraTimeline {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.timeline-container {
+    margin-top: 1rem;
+}
+
+.timeline-container .table {
+    font-size: 0.9rem;
+}
+
+.timeline-container .table td {
+    vertical-align: middle;
+}
+
+.timeline-container .table-success {
+    background: rgba(52, 199, 89, 0.1);
+}
+
+.timeline-container .badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
 }

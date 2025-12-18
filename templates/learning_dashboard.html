@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Dashboard - Esti-Mate</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>AI Learning Dashboard</h1>
+        
+        <div class="learning-stats">
+            <h2>Estimation Accuracy</h2>
+            <div id="accuracy-stats"></div>
+        </div>
+        
+        <div class="update-actual">
+            <h2>Update Actual Hours</h2>
+            <form id="update-form">
+                <input type="text" id="ticket-key" placeholder="JIRA Ticket (e.g., PROJ-123)" required>
+                <input type="number" id="actual-hours" placeholder="Actual Hours" step="0.1" required>
+                <button type="submit">Update</button>
+            </form>
+        </div>
+        
+        <div class="estimation-history">
+            <h2>Recent Estimations</h2>
+            <div id="history-table"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load accuracy stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/learning-stats');
+                const stats = await response.json();
+                
+                const statsDiv = document.getElementById('accuracy-stats');
+                if (stats.message) {
+                    statsDiv.innerHTML = `<p>${stats.message}</p>`;
+                } else {
+                    statsDiv.innerHTML = `
+                        <p>Total Estimations: ${stats.total_estimations}</p>
+                        <p>Completed: ${stats.completed_estimations}</p>
+                        <p>Average Error: ${(stats.avg_accuracy_error * 100).toFixed(1)}%</p>
+                        <p>Best Accuracy: ${(stats.best_accuracy * 100).toFixed(1)}% error</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Update actual hours
+        document.getElementById('update-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const ticketKey = document.getElementById('ticket-key').value;
+            const actualHours = parseFloat(document.getElementById('actual-hours').value);
+            
+            try {
+                const response = await fetch('/update-actual-hours', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticket_key: ticketKey, actual_hours: actualHours })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Actual hours updated successfully!');
+                    loadStats();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error updating hours: ' + error.message);
+            }
+        });
+        
+        // Load initial stats
+        loadStats();
+    </script>
+</body>
+</html>

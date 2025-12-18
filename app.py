@@ -35,7 +35,7 @@ class JiraClient:
         if not all([self.base_url, self.email, self.token]):
             raise Exception("JIRA configuration missing. Please configure JIRA settings first.")
         
-        url = f"{self.base_url}/rest/api/2/issue/{ticket_key}"
+        url = f"{self.base_url}/rest/api/2/issue/{ticket_key}?expand=changelog"
         auth = HTTPBasicAuth(self.email, self.token)
         
         print(f"Fetching JIRA ticket from: {url}")
@@ -102,6 +102,55 @@ class JiraClient:
                     'released': version.get('released', False)
                 })
         
+        # Extract changelog for status transitions
+        status_history = []
+        time_in_status = {}
+        if 'changelog' in data:
+            for history in data['changelog']['histories']:
+                for item in history['items']:
+                    if item['field'] == 'status':
+                        status_history.append({
+                            'from': item.get('fromString', ''),
+                            'to': item.get('toString', ''),
+                            'changed_at': history['created'],
+                            'author': history['author']['displayName']
+                        })
+        
+        # Calculate time spent in each status
+        if status_history:
+            from datetime import datetime
+            from dateutil import parser
+            
+            for i, transition in enumerate(status_history):
+                status_name = transition['from']
+                try:
+                    start_time = parser.parse(transition['changed_at'])
+                    
+                    if i + 1 < len(status_history):
+                        end_time = parser.parse(status_history[i + 1]['changed_at'])
+                    else:
+                        end_time = datetime.now(start_time.tzinfo)
+                    
+                    duration_hours = (end_time - start_time).total_seconds() / 3600
+                    
+                    if status_name not in time_in_status:
+                        time_in_status[status_name] = 0
+                    time_in_status[status_name] += duration_hours
+                except Exception as e:
+                    print(f"DEBUG - Error parsing date {transition['changed_at']}: {e}")
+                    continue
+        
+        # Extract time tracking data
+        time_tracking = {}
+        if 'timetracking' in data['fields']:
+            time_tracking = {
+                'original_estimate': data['fields']['timetracking'].get('originalEstimate', ''),
+                'remaining_estimate': data['fields']['timetracking'].get('remainingEstimate', ''),
+                'time_spent': data['fields']['timetracking'].get('timeSpent', ''),
+                'original_estimate_seconds': data['fields']['timetracking'].get('originalEstimateSeconds', 0),
+                'time_spent_seconds': data['fields']['timetracking'].get('timeSpentSeconds', 0)
+            }
+        
         return {
             'key': data['key'],
             'summary': data['fields']['summary'],
@@ -112,7 +161,12 @@ class JiraClient:
             'comments': comments,
             'labels': labels,
             'linked_issues': linked_issues,
-            'fix_versions': fix_versions
+            'fix_versions': fix_versions,
+            'status_history': status_history,
+            'time_in_status': time_in_status,
+            'time_tracking': time_tracking,
+            'created': data['fields'].get('created', ''),
+            'updated': data['fields'].get('updated', '')
         }
 
 jira_client = JiraClient()
@@ -332,12 +386,28 @@ def estimate():
         })
         
         custom_phases = data.get('custom_phases', {})
+        actual_hours = data.get('actual_hours')  # For learning system
+        uses_ai_tools = data.get('uses_ai_tools', False)  # AI tools checkbox
         
-        print(f"DEBUG - AI Estimation requested: {use_ai}")
-        print(f"DEBUG - Azure API key configured: {bool(os.getenv('AZURE_OPENAI_API_KEY'))}")
+        print(f"\n========== ESTIMATION REQUEST DEBUG ==========")
+        print(f"DEBUG - use_ai from request: {use_ai} (type: {type(use_ai)})")
+        print(f"DEBUG - Azure API key exists: {bool(os.getenv('AZURE_OPENAI_API_KEY'))}")
+        print(f"DEBUG - Azure API key length: {len(os.getenv('AZURE_OPENAI_API_KEY', ''))}")
+        print(f"DEBUG - Azure endpoint: {os.getenv('AZURE_OPENAI_ENDPOINT')}")
+        print(f"DEBUG - ai_estimator.api_key exists: {bool(ai_estimator.api_key)}")
+        print(f"DEBUG - ai_estimator.client exists: {bool(ai_estimator.client)}")
+        print(f"DEBUG - Condition check: use_ai={use_ai} AND api_key={bool(os.getenv('AZURE_OPENAI_API_KEY'))}")
+        print(f"DEBUG - Will use AI: {use_ai and os.getenv('AZURE_OPENAI_API_KEY')}")
+        print(f"============================================\n")
         
         if use_ai and os.getenv('AZURE_OPENAI_API_KEY'):
             print("DEBUG - Using AI estimation with FAB model")
+            # Add AI tools flag to JIRA data for processing
+            if jira_data:
+                jira_data['uses_ai_tools'] = uses_ai_tools
+            else:
+                jira_data = {'uses_ai_tools': uses_ai_tools}
+            
             # Use AI estimation
             ai_result = ai_estimator.estimate_with_ai(description, jira_data)
             
@@ -345,13 +415,18 @@ def estimate():
             status = jira_data.get('status', '').lower() if jira_data else ''
             status_override = status in ['qa', 'sit', 'testing', 'ready for testing', 'in testing', 'uat', 'user acceptance testing', 'ready for deployment', 'staging', 'done', 'closed', 'resolved', 'deployed', 'production', 'in progress', 'development', 'coding', 'in development']
             
-            if status_override:
-                print(f"DEBUG - Status '{status}' detected, applying status-based filtering instead of custom percentages")
+            # Check if user has customized phases - if so, don't apply status filtering
+            has_custom_phases = bool(custom_phases) or any(phase_percentages.get(phase, 0) != default_percent for phase, default_percent in [('requirements', 15), ('design', 20), ('development', 48), ('testing', 15), ('deployment', 2)])
+            
+            if status_override and not has_custom_phases:
+                print(f"DEBUG - Status '{status}' detected, applying status-based filtering (no custom phases)")
                 # Apply status filtering to AI result first
                 ai_result = ai_estimator._apply_status_based_filtering(ai_result, jira_data)
                 filtered_phases = ai_result.get('phases', {})
                 total_filtered_hours = ai_result.get('total_hours', 0)
             else:
+                if has_custom_phases:
+                    print(f"DEBUG - Custom phases detected, skipping status-based filtering")
                 # Apply custom percentages and filter phases
                 base_total = ai_result.get('total_hours', 80)
                 print(f"DEBUG - AI base total hours: {base_total}")
@@ -363,7 +438,7 @@ def estimate():
                 # Process standard phases
                 for phase in ['requirements', 'design', 'development', 'testing', 'deployment']:
                     if selected_phases.get(phase, True):
-                        custom_hours = round(base_total * (phase_percentages.get(phase, 0) / 100), 1)
+                        custom_hours = round(base_total * (phase_percentages.get(phase, 0) / 100), 2)
                         print(f"DEBUG - {phase}: {phase_percentages.get(phase, 0)}% of {base_total} = {custom_hours} hours")
                         filtered_phases[phase] = custom_hours
                         total_filtered_hours += custom_hours
@@ -371,12 +446,19 @@ def estimate():
                 # Process custom phases
                 for phase_key in custom_phases.keys():
                     if selected_phases.get(phase_key, True):
-                        custom_hours = round(base_total * (phase_percentages.get(phase_key, 0) / 100), 1)
+                        custom_hours = round(base_total * (phase_percentages.get(phase_key, 0) / 100), 2)
                         print(f"DEBUG - {phase_key}: {phase_percentages.get(phase_key, 0)}% of {base_total} = {custom_hours} hours")
                         filtered_phases[phase_key] = custom_hours
                         total_filtered_hours += custom_hours
                 
+                # Round total to avoid floating point precision issues
+                total_filtered_hours = round(total_filtered_hours, 2)
                 print(f"DEBUG - Total filtered hours: {total_filtered_hours}")
+            
+            # Get historical analysis if JIRA data available
+            historical_analysis = None
+            if jira_data and jira_data.get('status_history'):
+                historical_analysis = ai_estimator._analyze_jira_historical_patterns(jira_data)
             
             # Format result to match existing structure
             estimate_result = {
@@ -390,17 +472,22 @@ def estimate():
                 'ai_confidence': ai_result.get('confidence', 75),
                 'ai_reasoning': ai_result.get('reasoning', ''),
                 'risk_factors': ai_result.get('risk_factors', []),
-                'custom_phase_names': custom_phases
+                'custom_phase_names': custom_phases,
+                'historical_analysis': historical_analysis
             }
             
             if jira_data:
                 estimate_result['jira_details'] = {
                     'issue_type': jira_data.get('issue_type'),
                     'priority': jira_data.get('priority', 'Medium'),
-                    'status': jira_data.get('status')
+                    'status': jira_data.get('status'),
+                    'status_history': jira_data.get('status_history', []),
+                    'time_in_status': jira_data.get('time_in_status', {})
                 }
         else:
-            print("DEBUG - Using rule-based estimation (no AI)")
+            print("\n========== USING RULE-BASED ESTIMATION ==========")
+            print(f"DEBUG - Reason: use_ai={use_ai}, api_key_exists={bool(os.getenv('AZURE_OPENAI_API_KEY'))}")
+            print(f"================================================\n")
             # Use rule-based estimation
             estimate_result = estimator.estimate_project(description, jira_number, jira_data)
             
@@ -424,9 +511,21 @@ def estimate():
                     total_filtered_hours += custom_hours
             
             estimate_result['phases'] = filtered_phases
-            estimate_result['total_hours'] = total_filtered_hours
+            estimate_result['total_hours'] = round(total_filtered_hours, 2)
             estimate_result['estimation_method'] = 'rule_based'
             estimate_result['custom_phase_names'] = custom_phases
+        
+        # Record estimation for learning
+        if jira_number:
+            ai_estimator.learning_system.record_estimation(
+                jira_ticket=jira_number,
+                estimated_hours=estimate_result['total_hours'],
+                complexity=estimate_result['complexity'],
+                phases=estimate_result['phases'],
+                method=estimate_result.get('estimation_method', 'unknown'),
+                description=description,
+                actual_hours=actual_hours
+            )
         
         return jsonify(estimate_result)
     except Exception as e:
@@ -556,6 +655,38 @@ def get_pending_designs():
     try:
         pending = approval_workflow.get_pending_designs()
         return jsonify({'pending_designs': pending})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/learning-dashboard')
+def learning_dashboard():
+    return render_template('learning_dashboard.html')
+
+@app.route('/learning-stats')
+def get_learning_stats():
+    try:
+        stats = ai_estimator.learning_system.get_accuracy_stats()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/update-actual-hours', methods=['POST'])
+def update_actual_hours():
+    try:
+        data = request.get_json()
+        ticket_key = data.get('ticket_key')
+        actual_hours = data.get('actual_hours')
+        
+        if not ticket_key or actual_hours is None:
+            return jsonify({'error': 'Ticket key and actual hours are required'}), 400
+        
+        success = ai_estimator.learning_system.update_actual_hours(ticket_key, actual_hours)
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Actual hours updated successfully'})
+        else:
+            return jsonify({'error': 'Ticket not found in estimation history'}), 404
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

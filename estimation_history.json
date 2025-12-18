@@ -1,0 +1,938 @@
+[
+  {
+    "timestamp": "2025-12-17T15:57:32.330674",
+    "jira_ticket": "IIBO-9557",
+    "description": "Rainier - Genesys Cloud Automation via IIB - ApplyUserConfigs API. *Background:*\n\nThe Genesys Cloud application is a comprehensive cloud-based contact center platform designed to help organizations manage and optimize customer experience and engagement across multiple channels like voice, chat, email, text etc.\u00a0\n\nCurrently, a manual process is followed to configure Genesys Cloud access for new users when they fill the required fields and submit the \u201cOffice Phone Add/Change\u201d form in Rainier. The process includes assigning roles, divisions, phone numbers, skills, queues, etc. The configuration is based on a *model user* (a reference user whose settings are copied).\n\n*Purpose:*\n\nThe requirement is to reduce manual intervention when a new user request is created in Rainier and automate the Genesys Cloud user setup process, using a model user as a template, to save time, reduce errors, and ensure consistency.\n\n*Flow:*\n\nRainier >> IIB >> Genesys App >> Genesys Cloud\n\n*Scope for IIB:* \n\n* When an user fills the \u201cOffice Phone Add/Change\u201d form in Rainier and clicks submit, Rainier will do an internal check using the business unit/country of the requester (i.e.) the target user to determine the Genesys cloud org the user belongs to.\n** WK has two separate Genesys Cloud Orgs: \n*** Org 1: For EMEA + APAC users\n*** Org 2: For North America users\n* Rainier will call IIB using an API call with the genesys cloud org, email ID or target user and model user.\n* Upon receiving the request from Rainier, IIB will call Genesys cloud app to receive the access token. On receiving the OAuth token, IIB will call the API - ApplyUserConfigs exposed by Genesys App using the details received in the request from Rainier.\n* IIB will not perform any field level validations or business transformations and will act as a passthrough layer.\n* Genesys App will interact will Genesys Cloud and orchestrate a series of calls to get the user configuration details of the model user and apply the same user configurations to the target user.\n* This orchestration may take up to 30-40 minutes. In the meantime, an acknowledgement is sent to Rainier stating the request is in process.\n* Once the configurations are applied to the target user, Genesys App makes a callback request to IIB.\n* In case of failure, detailed error response will be sent to Rainier.\n\n*Out of Scope:*\n\n# Updating existing phone configuration through Rainier request forms.\n# Any request related to MS teams will not be part of this requirement.\n\n*Service Portfolio:*    [ApplyUserConfigs_Genesys_Req_V1|https://wolterskluwer.sharepoint.com/teams/GBS-IIB/Lists/Integration%20Services%20Portfolio/DispForm.aspx?ID=936&e=hjWyfU]\n\n*Context diagram:*   [ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/ApplyUserConfigs_Genesys_Req_V1/ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx?d=w16c929074c7b4fbb8e22b40cbf048030&csf=1&web=1&e=JLYpch]\n\n*Design document:*  [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|smart-link] \n\n*Runbook document:*   [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|smart-link] \n\n*Mapping Document:* TBD\n\n*Sequence Diagram:*  [Rainier - Genesys Cloud Automation via IIB.vsdx|https://wolterskluwer.sharepoint.com/:u:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/Rainier%20-%20Genesys%20Cloud%20Automation%20via%20IIB.vsdx?d=w9cc4e63e37004a58a86a200d97f40cd1&csf=1&web=1&e=P8xyjc]",
+    "estimated_hours": 575.0,
+    "actual_hours": null,
+    "complexity": "High",
+    "phases": {
+      "requirements": 86.25,
+      "design": 115.0,
+      "development": 276.0,
+      "testing": 86.25,
+      "deployment": 11.5
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T15:59:08.072909",
+    "jira_ticket": "IIBO-9557",
+    "description": "Rainier - Genesys Cloud Automation via IIB - ApplyUserConfigs API. *Background:*\n\nThe Genesys Cloud application is a comprehensive cloud-based contact center platform designed to help organizations manage and optimize customer experience and engagement across multiple channels like voice, chat, email, text etc.\u00a0\n\nCurrently, a manual process is followed to configure Genesys Cloud access for new users when they fill the required fields and submit the \u201cOffice Phone Add/Change\u201d form in Rainier. The process includes assigning roles, divisions, phone numbers, skills, queues, etc. The configuration is based on a *model user* (a reference user whose settings are copied).\n\n*Purpose:*\n\nThe requirement is to reduce manual intervention when a new user request is created in Rainier and automate the Genesys Cloud user setup process, using a model user as a template, to save time, reduce errors, and ensure consistency.\n\n*Flow:*\n\nRainier >> IIB >> Genesys App >> Genesys Cloud\n\n*Scope for IIB:* \n\n* When an user fills the \u201cOffice Phone Add/Change\u201d form in Rainier and clicks submit, Rainier will do an internal check using the business unit/country of the requester (i.e.) the target user to determine the Genesys cloud org the user belongs to.\n** WK has two separate Genesys Cloud Orgs: \n*** Org 1: For EMEA + APAC users\n*** Org 2: For North America users\n* Rainier will call IIB using an API call with the genesys cloud org, email ID or target user and model user.\n* Upon receiving the request from Rainier, IIB will call Genesys cloud app to receive the access token. On receiving the OAuth token, IIB will call the API - ApplyUserConfigs exposed by Genesys App using the details received in the request from Rainier.\n* IIB will not perform any field level validations or business transformations and will act as a passthrough layer.\n* Genesys App will interact will Genesys Cloud and orchestrate a series of calls to get the user configuration details of the model user and apply the same user configurations to the target user.\n* This orchestration may take up to 30-40 minutes. In the meantime, an acknowledgement is sent to Rainier stating the request is in process.\n* Once the configurations are applied to the target user, Genesys App makes a callback request to IIB.\n* In case of failure, detailed error response will be sent to Rainier.\n\n*Out of Scope:*\n\n# Updating existing phone configuration through Rainier request forms.\n# Any request related to MS teams will not be part of this requirement.\n\n*Service Portfolio:*    [ApplyUserConfigs_Genesys_Req_V1|https://wolterskluwer.sharepoint.com/teams/GBS-IIB/Lists/Integration%20Services%20Portfolio/DispForm.aspx?ID=936&e=hjWyfU]\n\n*Context diagram:*   [ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/ApplyUserConfigs_Genesys_Req_V1/ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx?d=w16c929074c7b4fbb8e22b40cbf048030&csf=1&web=1&e=JLYpch]\n\n*Design document:*  [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|smart-link] \n\n*Runbook document:*   [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|smart-link] \n\n*Mapping Document:* TBD\n\n*Sequence Diagram:*  [Rainier - Genesys Cloud Automation via IIB.vsdx|https://wolterskluwer.sharepoint.com/:u:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/Rainier%20-%20Genesys%20Cloud%20Automation%20via%20IIB.vsdx?d=w9cc4e63e37004a58a86a200d97f40cd1&csf=1&web=1&e=P8xyjc]",
+    "estimated_hours": 188.0,
+    "actual_hours": null,
+    "complexity": "High",
+    "phases": {
+      "requirements": 28.2,
+      "design": 37.6,
+      "development": 90.24,
+      "testing": 28.2,
+      "deployment": 3.76
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:01:12.325762",
+    "jira_ticket": "IIBO-9557",
+    "description": "Rainier - Genesys Cloud Automation via IIB - ApplyUserConfigs API. *Background:*\n\nThe Genesys Cloud application is a comprehensive cloud-based contact center platform designed to help organizations manage and optimize customer experience and engagement across multiple channels like voice, chat, email, text etc.\u00a0\n\nCurrently, a manual process is followed to configure Genesys Cloud access for new users when they fill the required fields and submit the \u201cOffice Phone Add/Change\u201d form in Rainier. The process includes assigning roles, divisions, phone numbers, skills, queues, etc. The configuration is based on a *model user* (a reference user whose settings are copied).\n\n*Purpose:*\n\nThe requirement is to reduce manual intervention when a new user request is created in Rainier and automate the Genesys Cloud user setup process, using a model user as a template, to save time, reduce errors, and ensure consistency.\n\n*Flow:*\n\nRainier >> IIB >> Genesys App >> Genesys Cloud\n\n*Scope for IIB:* \n\n* When an user fills the \u201cOffice Phone Add/Change\u201d form in Rainier and clicks submit, Rainier will do an internal check using the business unit/country of the requester (i.e.) the target user to determine the Genesys cloud org the user belongs to.\n** WK has two separate Genesys Cloud Orgs: \n*** Org 1: For EMEA + APAC users\n*** Org 2: For North America users\n* Rainier will call IIB using an API call with the genesys cloud org, email ID or target user and model user.\n* Upon receiving the request from Rainier, IIB will call Genesys cloud app to receive the access token. On receiving the OAuth token, IIB will call the API - ApplyUserConfigs exposed by Genesys App using the details received in the request from Rainier.\n* IIB will not perform any field level validations or business transformations and will act as a passthrough layer.\n* Genesys App will interact will Genesys Cloud and orchestrate a series of calls to get the user configuration details of the model user and apply the same user configurations to the target user.\n* This orchestration may take up to 30-40 minutes. In the meantime, an acknowledgement is sent to Rainier stating the request is in process.\n* Once the configurations are applied to the target user, Genesys App makes a callback request to IIB.\n* In case of failure, detailed error response will be sent to Rainier.\n\n*Out of Scope:*\n\n# Updating existing phone configuration through Rainier request forms.\n# Any request related to MS teams will not be part of this requirement.\n\n*Service Portfolio:*    [ApplyUserConfigs_Genesys_Req_V1|https://wolterskluwer.sharepoint.com/teams/GBS-IIB/Lists/Integration%20Services%20Portfolio/DispForm.aspx?ID=936&e=hjWyfU]\n\n*Context diagram:*   [ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/ApplyUserConfigs_Genesys_Req_V1/ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx?d=w16c929074c7b4fbb8e22b40cbf048030&csf=1&web=1&e=JLYpch]\n\n*Design document:*  [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|smart-link] \n\n*Runbook document:*   [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|smart-link] \n\n*Mapping Document:* TBD\n\n*Sequence Diagram:*  [Rainier - Genesys Cloud Automation via IIB.vsdx|https://wolterskluwer.sharepoint.com/:u:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/Rainier%20-%20Genesys%20Cloud%20Automation%20via%20IIB.vsdx?d=w9cc4e63e37004a58a86a200d97f40cd1&csf=1&web=1&e=P8xyjc]",
+    "estimated_hours": 84.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 12.6,
+      "design": 16.8,
+      "development": 40.32,
+      "testing": 12.6,
+      "deployment": 1.68
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:05:04.689318",
+    "jira_ticket": "IIBO-9557",
+    "description": "Rainier - Genesys Cloud Automation via IIB - ApplyUserConfigs API. *Background:*\n\nThe Genesys Cloud application is a comprehensive cloud-based contact center platform designed to help organizations manage and optimize customer experience and engagement across multiple channels like voice, chat, email, text etc.\u00a0\n\nCurrently, a manual process is followed to configure Genesys Cloud access for new users when they fill the required fields and submit the \u201cOffice Phone Add/Change\u201d form in Rainier. The process includes assigning roles, divisions, phone numbers, skills, queues, etc. The configuration is based on a *model user* (a reference user whose settings are copied).\n\n*Purpose:*\n\nThe requirement is to reduce manual intervention when a new user request is created in Rainier and automate the Genesys Cloud user setup process, using a model user as a template, to save time, reduce errors, and ensure consistency.\n\n*Flow:*\n\nRainier >> IIB >> Genesys App >> Genesys Cloud\n\n*Scope for IIB:* \n\n* When an user fills the \u201cOffice Phone Add/Change\u201d form in Rainier and clicks submit, Rainier will do an internal check using the business unit/country of the requester (i.e.) the target user to determine the Genesys cloud org the user belongs to.\n** WK has two separate Genesys Cloud Orgs: \n*** Org 1: For EMEA + APAC users\n*** Org 2: For North America users\n* Rainier will call IIB using an API call with the genesys cloud org, email ID or target user and model user.\n* Upon receiving the request from Rainier, IIB will call Genesys cloud app to receive the access token. On receiving the OAuth token, IIB will call the API - ApplyUserConfigs exposed by Genesys App using the details received in the request from Rainier.\n* IIB will not perform any field level validations or business transformations and will act as a passthrough layer.\n* Genesys App will interact will Genesys Cloud and orchestrate a series of calls to get the user configuration details of the model user and apply the same user configurations to the target user.\n* This orchestration may take up to 30-40 minutes. In the meantime, an acknowledgement is sent to Rainier stating the request is in process.\n* Once the configurations are applied to the target user, Genesys App makes a callback request to IIB.\n* In case of failure, detailed error response will be sent to Rainier.\n\n*Out of Scope:*\n\n# Updating existing phone configuration through Rainier request forms.\n# Any request related to MS teams will not be part of this requirement.\n\n*Service Portfolio:*    [ApplyUserConfigs_Genesys_Req_V1|https://wolterskluwer.sharepoint.com/teams/GBS-IIB/Lists/Integration%20Services%20Portfolio/DispForm.aspx?ID=936&e=hjWyfU]\n\n*Context diagram:*   [ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/ApplyUserConfigs_Genesys_Req_V1/ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx?d=w16c929074c7b4fbb8e22b40cbf048030&csf=1&web=1&e=JLYpch]\n\n*Design document:*  [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|smart-link] \n\n*Runbook document:*   [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|smart-link] \n\n*Mapping Document:* TBD\n\n*Sequence Diagram:*  [Rainier - Genesys Cloud Automation via IIB.vsdx|https://wolterskluwer.sharepoint.com/:u:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/Rainier%20-%20Genesys%20Cloud%20Automation%20via%20IIB.vsdx?d=w9cc4e63e37004a58a86a200d97f40cd1&csf=1&web=1&e=P8xyjc]",
+    "estimated_hours": 196.0,
+    "actual_hours": null,
+    "complexity": "High",
+    "phases": {
+      "requirements": 29.4,
+      "design": 39.2,
+      "development": 94.08,
+      "testing": 29.4,
+      "deployment": 3.92
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:06:53.165461",
+    "jira_ticket": "IIBO-9557",
+    "description": "Rainier - Genesys Cloud Automation via IIB - ApplyUserConfigs API. *Background:*\n\nThe Genesys Cloud application is a comprehensive cloud-based contact center platform designed to help organizations manage and optimize customer experience and engagement across multiple channels like voice, chat, email, text etc.\u00a0\n\nCurrently, a manual process is followed to configure Genesys Cloud access for new users when they fill the required fields and submit the \u201cOffice Phone Add/Change\u201d form in Rainier. The process includes assigning roles, divisions, phone numbers, skills, queues, etc. The configuration is based on a *model user* (a reference user whose settings are copied).\n\n*Purpose:*\n\nThe requirement is to reduce manual intervention when a new user request is created in Rainier and automate the Genesys Cloud user setup process, using a model user as a template, to save time, reduce errors, and ensure consistency.\n\n*Flow:*\n\nRainier >> IIB >> Genesys App >> Genesys Cloud\n\n*Scope for IIB:* \n\n* When an user fills the \u201cOffice Phone Add/Change\u201d form in Rainier and clicks submit, Rainier will do an internal check using the business unit/country of the requester (i.e.) the target user to determine the Genesys cloud org the user belongs to.\n** WK has two separate Genesys Cloud Orgs: \n*** Org 1: For EMEA + APAC users\n*** Org 2: For North America users\n* Rainier will call IIB using an API call with the genesys cloud org, email ID or target user and model user.\n* Upon receiving the request from Rainier, IIB will call Genesys cloud app to receive the access token. On receiving the OAuth token, IIB will call the API - ApplyUserConfigs exposed by Genesys App using the details received in the request from Rainier.\n* IIB will not perform any field level validations or business transformations and will act as a passthrough layer.\n* Genesys App will interact will Genesys Cloud and orchestrate a series of calls to get the user configuration details of the model user and apply the same user configurations to the target user.\n* This orchestration may take up to 30-40 minutes. In the meantime, an acknowledgement is sent to Rainier stating the request is in process.\n* Once the configurations are applied to the target user, Genesys App makes a callback request to IIB.\n* In case of failure, detailed error response will be sent to Rainier.\n\n*Out of Scope:*\n\n# Updating existing phone configuration through Rainier request forms.\n# Any request related to MS teams will not be part of this requirement.\n\n*Service Portfolio:*    [ApplyUserConfigs_Genesys_Req_V1|https://wolterskluwer.sharepoint.com/teams/GBS-IIB/Lists/Integration%20Services%20Portfolio/DispForm.aspx?ID=936&e=hjWyfU]\n\n*Context diagram:*   [ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/ApplyUserConfigs_Genesys_Req_V1/ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx?d=w16c929074c7b4fbb8e22b40cbf048030&csf=1&web=1&e=JLYpch]\n\n*Design document:*  [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|smart-link] \n\n*Runbook document:*   [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|smart-link] \n\n*Mapping Document:* TBD\n\n*Sequence Diagram:*  [Rainier - Genesys Cloud Automation via IIB.vsdx|https://wolterskluwer.sharepoint.com/:u:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/Rainier%20-%20Genesys%20Cloud%20Automation%20via%20IIB.vsdx?d=w9cc4e63e37004a58a86a200d97f40cd1&csf=1&web=1&e=P8xyjc]",
+    "estimated_hours": 266.0,
+    "actual_hours": null,
+    "complexity": "High",
+    "phases": {
+      "requirements": 39.9,
+      "design": 53.2,
+      "development": 127.68,
+      "testing": 39.9,
+      "deployment": 5.32
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:10:11.606297",
+    "jira_ticket": "IIBO-9557",
+    "description": "Rainier - Genesys Cloud Automation via IIB - ApplyUserConfigs API. *Background:*\n\nThe Genesys Cloud application is a comprehensive cloud-based contact center platform designed to help organizations manage and optimize customer experience and engagement across multiple channels like voice, chat, email, text etc.\u00a0\n\nCurrently, a manual process is followed to configure Genesys Cloud access for new users when they fill the required fields and submit the \u201cOffice Phone Add/Change\u201d form in Rainier. The process includes assigning roles, divisions, phone numbers, skills, queues, etc. The configuration is based on a *model user* (a reference user whose settings are copied).\n\n*Purpose:*\n\nThe requirement is to reduce manual intervention when a new user request is created in Rainier and automate the Genesys Cloud user setup process, using a model user as a template, to save time, reduce errors, and ensure consistency.\n\n*Flow:*\n\nRainier >> IIB >> Genesys App >> Genesys Cloud\n\n*Scope for IIB:* \n\n* When an user fills the \u201cOffice Phone Add/Change\u201d form in Rainier and clicks submit, Rainier will do an internal check using the business unit/country of the requester (i.e.) the target user to determine the Genesys cloud org the user belongs to.\n** WK has two separate Genesys Cloud Orgs: \n*** Org 1: For EMEA + APAC users\n*** Org 2: For North America users\n* Rainier will call IIB using an API call with the genesys cloud org, email ID or target user and model user.\n* Upon receiving the request from Rainier, IIB will call Genesys cloud app to receive the access token. On receiving the OAuth token, IIB will call the API - ApplyUserConfigs exposed by Genesys App using the details received in the request from Rainier.\n* IIB will not perform any field level validations or business transformations and will act as a passthrough layer.\n* Genesys App will interact will Genesys Cloud and orchestrate a series of calls to get the user configuration details of the model user and apply the same user configurations to the target user.\n* This orchestration may take up to 30-40 minutes. In the meantime, an acknowledgement is sent to Rainier stating the request is in process.\n* Once the configurations are applied to the target user, Genesys App makes a callback request to IIB.\n* In case of failure, detailed error response will be sent to Rainier.\n\n*Out of Scope:*\n\n# Updating existing phone configuration through Rainier request forms.\n# Any request related to MS teams will not be part of this requirement.\n\n*Service Portfolio:*    [ApplyUserConfigs_Genesys_Req_V1|https://wolterskluwer.sharepoint.com/teams/GBS-IIB/Lists/Integration%20Services%20Portfolio/DispForm.aspx?ID=936&e=hjWyfU]\n\n*Context diagram:*   [ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/ApplyUserConfigs_Genesys_Req_V1/ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx?d=w16c929074c7b4fbb8e22b40cbf048030&csf=1&web=1&e=JLYpch]\n\n*Design document:*  [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|smart-link] \n\n*Runbook document:*   [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|smart-link] \n\n*Mapping Document:* TBD\n\n*Sequence Diagram:*  [Rainier - Genesys Cloud Automation via IIB.vsdx|https://wolterskluwer.sharepoint.com/:u:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/Rainier%20-%20Genesys%20Cloud%20Automation%20via%20IIB.vsdx?d=w9cc4e63e37004a58a86a200d97f40cd1&csf=1&web=1&e=P8xyjc]",
+    "estimated_hours": 136.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 20.4,
+      "design": 27.2,
+      "development": 65.28,
+      "testing": 20.4,
+      "deployment": 2.72
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:11:09.895440",
+    "jira_ticket": "STEPOPS-43614",
+    "description": "ECG : Blackduck Logback 1.5.15 Vulnerability. Below\u00a0*Open* vulnerability was identified in ECG Dev environment as part of latest Blackduck scan on {{2025-12-08}} \n\n|*CVE ID*|*Type*|*Packages*|*Package Version*|*CVSS*|*Short Term Recommendation & Long term Recommendation*|*Severity*|\n|BDSA-2024-9866,BDSA-2024-9861|maven|*logback*|1.5.15|6.8|[+Logback 1.5.+|https://blackduck.gsdwkglobal.com/api/components/6ca9663c-41d4-44c0-8d1e-b1b12745bdc5/versions/3058766b-b6c6-40e8-9dfb-6e4ee6c8a484]+21+|Medium|\n\nh3. Description\n\nLogback is vulnerable to arbitrary code execution. A privileged attacker could exploit this by compromising an existing logback configuration file or by injecting an environment variable before program execution. Successful exploitation requires both the Janino library and Spring Framework to be present on the user's class path.",
+    "estimated_hours": 28.0,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 24.0,
+      "testing": 3.0,
+      "deployment": 1.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:11:27.317531",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 64.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 40.0,
+      "testing": 20.0,
+      "deployment": 4.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:14:53.993271",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 28.0,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 24.0,
+      "testing": 3.0,
+      "deployment": 1.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:17:09.605464",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 28.0,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 24.0,
+      "testing": 3.0,
+      "deployment": 1.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:17:34.979174",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 64.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 42.0,
+      "testing": 18.0,
+      "deployment": 4.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:18:18.047404",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 60.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 40.0,
+      "testing": 15.0,
+      "deployment": 5.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:18:53.235790",
+    "jira_ticket": "IIBO-9557",
+    "description": "Rainier - Genesys Cloud Automation via IIB - ApplyUserConfigs API. *Background:*\n\nThe Genesys Cloud application is a comprehensive cloud-based contact center platform designed to help organizations manage and optimize customer experience and engagement across multiple channels like voice, chat, email, text etc.\u00a0\n\nCurrently, a manual process is followed to configure Genesys Cloud access for new users when they fill the required fields and submit the \u201cOffice Phone Add/Change\u201d form in Rainier. The process includes assigning roles, divisions, phone numbers, skills, queues, etc. The configuration is based on a *model user* (a reference user whose settings are copied).\n\n*Purpose:*\n\nThe requirement is to reduce manual intervention when a new user request is created in Rainier and automate the Genesys Cloud user setup process, using a model user as a template, to save time, reduce errors, and ensure consistency.\n\n*Flow:*\n\nRainier >> IIB >> Genesys App >> Genesys Cloud\n\n*Scope for IIB:* \n\n* When an user fills the \u201cOffice Phone Add/Change\u201d form in Rainier and clicks submit, Rainier will do an internal check using the business unit/country of the requester (i.e.) the target user to determine the Genesys cloud org the user belongs to.\n** WK has two separate Genesys Cloud Orgs: \n*** Org 1: For EMEA + APAC users\n*** Org 2: For North America users\n* Rainier will call IIB using an API call with the genesys cloud org, email ID or target user and model user.\n* Upon receiving the request from Rainier, IIB will call Genesys cloud app to receive the access token. On receiving the OAuth token, IIB will call the API - ApplyUserConfigs exposed by Genesys App using the details received in the request from Rainier.\n* IIB will not perform any field level validations or business transformations and will act as a passthrough layer.\n* Genesys App will interact will Genesys Cloud and orchestrate a series of calls to get the user configuration details of the model user and apply the same user configurations to the target user.\n* This orchestration may take up to 30-40 minutes. In the meantime, an acknowledgement is sent to Rainier stating the request is in process.\n* Once the configurations are applied to the target user, Genesys App makes a callback request to IIB.\n* In case of failure, detailed error response will be sent to Rainier.\n\n*Out of Scope:*\n\n# Updating existing phone configuration through Rainier request forms.\n# Any request related to MS teams will not be part of this requirement.\n\n*Service Portfolio:*    [ApplyUserConfigs_Genesys_Req_V1|https://wolterskluwer.sharepoint.com/teams/GBS-IIB/Lists/Integration%20Services%20Portfolio/DispForm.aspx?ID=936&e=hjWyfU]\n\n*Context diagram:*   [ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/ApplyUserConfigs_Genesys_Req_V1/ContextDiagram_ApplyUserConfigs_Genesys_Req_V1.docx?d=w16c929074c7b4fbb8e22b40cbf048030&csf=1&web=1&e=JLYpch]\n\n*Design document:*  [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/897194549/IDD-ApplyUserConfigs_Genesys_Req_V1?atlOrigin=eyJpIjoiYmY0ZDhhZWU4MTAyNGY1N2JiOTdhYzkzNmU2NWM3YmYiLCJwIjoiYyJ9|smart-link] \n\n*Runbook document:*   [https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|https://wkenterprise.atlassian.net/wiki/spaces/IIIB/pages/901709825/Runbook-ApplyUserConfigs_Genesys_Resp_V1?atlOrigin=eyJpIjoiNzhlMzcxYmEyMzZlNDMyYWIyNDlhYzg3OTRiMmEzODciLCJwIjoiYyJ9|smart-link] \n\n*Mapping Document:* TBD\n\n*Sequence Diagram:*  [Rainier - Genesys Cloud Automation via IIB.vsdx|https://wolterskluwer.sharepoint.com/:u:/r/teams/GBS-IIB/Shared%20Documents/Projects/Rainier/Genesys%20Cloud%20Automation/Rainier%20-%20Genesys%20Cloud%20Automation%20via%20IIB.vsdx?d=w9cc4e63e37004a58a86a200d97f40cd1&csf=1&web=1&e=P8xyjc]",
+    "estimated_hours": 166.0,
+    "actual_hours": null,
+    "complexity": "High",
+    "phases": {
+      "requirements": 24.9,
+      "design": 33.2,
+      "development": 79.68,
+      "testing": 24.9,
+      "deployment": 3.32
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:29:08.735158",
+    "jira_ticket": "GGMI-110",
+    "description": "COUPA GGM India Fixed Asset . To create the WBS element in SAP for GGM India - *GGMI-IN10999999_9999_999* \n\n ( to be included as a manual cutover strategy and IIB to to hardcode this value for the API for Fixed Asset)\n\na) Plant IN10 - IIB to determine the logic for Fixed Asset based on the Coupa COA\n\nb) Create the submission blockers for Fixed Asset for GGM India\n\nc) To utilize the GL account from IN20 for FA (no changes to the list of GL accounts for IIB)- Below GL accounts to be used\n\n-11112410, 11121110, 11230100, 11241100,11243100,11242100, 11245100-- *-Confirmed by SAP team-*\n\n11112410,11121210,11230100,11241100,11242100,11243100,11245100,11123010 - Update to Fixed asset -*Confirmed by SAP team on 27th October 2025*\n\nd) SFTP folders to be available for GBSCOUPA to manage the Fixed Asset (new SFTP folders will be created for GGM India\n\ne) New Naming convention of the FA files in SFTP - IIB\n\nf) IIB to update the integration to include IN10 for IIB\n\ng) To pass the WBS element in COUPA to SAP Fixed Asset (Tab : Origin) - *GGMI-IN10999999_9999_999*\n\nh) TVARVC update for below objects: ZFIASSET_CREATE_COUPA and  ZFIASSET_FAIL_COUPA\n\ni) The Location code will be Company Code +01 i.e IN1001.\n\n|Account type (Chart of Accounts)|Ship To address|COUPA Location Code|Location-Code in text file from IIB|\n|[IN10 WK India   Pvt Ltd-GGM|https://wolterskluwer-dev.coupahost.com/account_types/61]|DLF   Cyber City, Phase II, Building No.10,\n     3rd Floor, Tower B,\n     Gurgaon,\n     122002|IND-Gurgaon-DLF-Phase   II-Building 10|IN1001|",
+    "estimated_hours": 128.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 19.2,
+      "design": 25.6,
+      "development": 61.44,
+      "testing": 19.2,
+      "deployment": 2.56
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:31:33.754676",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 28.0,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 24.0,
+      "testing": 3.0,
+      "deployment": 1.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:32:42.134992",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 80.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 12.0,
+      "design": 16.0,
+      "development": 38.4,
+      "testing": 12.0,
+      "deployment": 1.6
+    },
+    "method": "rule_based",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:32:50.181763",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 28.0,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 24.0,
+      "testing": 3.0,
+      "deployment": 1.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:42:52.107020",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:44:20.725537",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 49.4,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 28.0,
+      "testing": 16.0,
+      "deployment": 5.4
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T16:45:13.683578",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 49.4,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 28.0,
+      "testing": 16.0,
+      "deployment": 5.4
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T17:53:09.848767",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 64.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 42.0,
+      "testing": 18.0,
+      "deployment": 4.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T17:53:23.985060",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T18:03:43.980880",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 44.6,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 26.6,
+      "testing": 14.4,
+      "deployment": 3.6
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T18:04:23.112187",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 44.6,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 26.6,
+      "testing": 14.4,
+      "deployment": 3.6
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T18:07:05.993175",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 49.4,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 28.0,
+      "testing": 16.0,
+      "deployment": 5.4
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T18:10:22.701646",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.11,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 3.02,
+      "design": 3.62,
+      "development": 6.03,
+      "testing": 2.01,
+      "deployment": 0.4,
+      "ai": 5.03
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T18:10:37.176232",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 15.08,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 3.02,
+      "design": 3.62,
+      "development": 6.03,
+      "testing": 2.01,
+      "deployment": 0.4
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T18:50:21.720615",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 80.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 12.0,
+      "design": 16.0,
+      "development": 38.4,
+      "testing": 12.0,
+      "deployment": 1.6
+    },
+    "method": "rule_based",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T18:50:40.007924",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 60.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 38.0,
+      "testing": 18.0,
+      "deployment": 4.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T18:51:04.864750",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 43.00000000000001,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 26.6,
+      "testing": 12.8,
+      "deployment": 3.6
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T19:13:31.248461",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 80.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 12.0,
+      "design": 16.0,
+      "development": 38.4,
+      "testing": 12.0,
+      "deployment": 1.6
+    },
+    "method": "rule_based",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T19:14:00.039660",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 66.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 42.0,
+      "testing": 20.0,
+      "deployment": 4.0
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-17T19:14:39.708622",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 40.4,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 22.4,
+      "testing": 14.4,
+      "deployment": 3.6
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:17:43.597149",
+    "jira_ticket": "EDP-679",
+    "description": "ODS to EDP job - ETL req/design . This request is for an enhancement in the Enterprise Data Portal (EDP) project, specifically to design and implement an informatica ETL job that replicates data from ODS to the EDP database.\n\n Currently this process is done by MDC Replication jobs which are .NET application.\n\n[+02 ODS to EDP Replication Design Document.docx+|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS_Support/_layouts/15/Doc.aspx?sourcedoc=%7B7D4E999F-5269-4711-8FA1-69611CFE5891%7D&file=002%20ODS%20to%20EDP%20Replication%20Design%20Document.docx&wdOrigin=TEAMS-MAGLEV.undefined_ns.rwc&action=default&mobileredirect=true]\n\n[^002 ODS to EDP Replication Design Document.docx]\n\nEDP Context Diagram:\n\n!EDP Context Diagram - EDP Target State-20251119-130729.png|width=354,alt=\"EDP Context Diagram - EDP Target State-20251119-130729.png\"!",
+    "estimated_hours": 110.2,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 16.53,
+      "design": 22.04,
+      "development": 52.9,
+      "testing": 16.53,
+      "deployment": 2.2
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:25:46.840330",
+    "jira_ticket": "EDP-1217",
+    "description": "Phase-3: Admin Dashboard page. *1.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name:* Admin Dashboard Page\n\n*1.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case description:* User should be able to open the Admin Dashboard page after login and user should be able to navigate to other product related pages from the dashboard.\u00a0\n\n*1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access Required for functionality:* Admin\n\n*1.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions:* The user has logged into the Enterprise Data Portal by providing valid WK credentials.\n\n*1.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End conditions:*\n\n1.5.1.User can successfully view the Admin Dashboard Page\n\n1.5.2.User can navigate to other Admin related pages from the dashboard.\u00a0\n\n*1.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed end Condition:*\n\n1.6.1.User can\u2019t successfully view the Admin Dashboard Page\n\n1.6.2.User can\u2019t navigate to other Admin related pages from the dashboard\n\n*1.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors*\n\n1.7.1.Authorized EDP User\u00a0\n\n1.7.2.Enterprise Data Portal system\u00a0\n\n*1.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger:* User clicks on \u201cAdmin\u201d link in left navigation menu.\n\n*1.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow 1:*\n\n1.9.1.User click on \u201cAdmin\u201d link in left navigation menu.\n\n1.9.2.System will display following link under \u201cPlease select\u2026\u201d:\n\n1.9.2.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cLookups\u201d\n\n1.9.2.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cUser Access Approval Queue\u201d\n\n1.9.2.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cUser Admin\u201d\n\n1.9.2.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cFile Upload\u201d\n\n1.9.2.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: system will be navigated to appropriate page when user click on above links",
+    "estimated_hours": 27.49,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 4.12,
+      "design": 5.5,
+      "development": 13.2,
+      "testing": 4.12,
+      "deployment": 0.55
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:27:36.083603",
+    "jira_ticket": "EDP-1454",
+    "description": "Lookups. Lookups : \n\n# Lookups Functionality\n\n7.1. Use case name: Admin Team can maintain various types of lookup tables.\n\n7.2. Use case description: Admin Team should be able to maintain various types of lookup tables.\n\n7.3. Access Required for functionality: Admin\n\n7.4. Preconditions: The user has logged into the Enterprise Data Portal by providing valid WK credentials.\n\n7.5. Success End conditions:\n\n7.5.1. User can successfully maintain various types of lookup tables.\n\n7.6. Failed end Condition:\n\n7.6.1. User can\u2019t maintain lookup tables.\n\n7.7. Primary actors\n\n7.7.1. Authorized Master Data Team\n\n7.7.2. Enterprise Data Portal system\n\n7.8. Trigger: User clicks on \u201cAdmin - Lookups\u201d page using the navigation menu.\n\n7.9. Primary flow 1:\n\n7.9.1. User navigates to \u201cAdmin - Lookups\u201d page.\n\n7.9.2. System will display following fields for user\u2019s entry:\n\n7.9.2.1. Lookup Table: (Dropdown) (Required)\n\n7.9.2.2. System will display \u201cDisplay Lookup Table\u201d button. When user will press \u201cDisplay Lookup Table\u201d button\u201d\n\n7.9.2.2.1. A table will be displayed to the user: Columns will be different for each lookup table option (please refer next section for the details).\n\n7.9.2.2.2. Download CSV option will be appeared on right hand corner (above the table).\n\n7.9.2.2.3. Table will display 10 records at a time with option to go to next page/last page/first page/previous page.",
+    "estimated_hours": 43.49,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 6.52,
+      "design": 8.7,
+      "development": 20.88,
+      "testing": 6.52,
+      "deployment": 0.87
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:28:59.885204",
+    "jira_ticket": "EDP-1496",
+    "description": "File Upload . User Navigates to \u201cAdmin-Upload File\u201d page.\n\n1.1.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Section header: Upload To File Store\n\n1.1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Add files: \u00a0Button\n\nNote: Supporting Document: (Following extensions are allowed .csv, .docx, .xls, .doc, .xlsx, Pdf) (Max file size: 20 MB)\n\n1.1.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Upload: Button\n\nNote: only one file uploaded at a time\n\n1.1.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Table will display 10 records at a time with option to go to next page/last page/first page/previous page.\u00a0\n\n1.1.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: once user clicks on the Upload file button the file gets update in the table column\n\n1.1.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 The column table will be displayed below:\n\n1.1.9.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Delete: if the user clicks on the delete button the file will get deleted\n\n1.1.9.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: when user click on the Delete option the following message will be displayed \u201cAre you sure that you want to delete this record?\u201d with Yes/No buttons will appear for user\u2019s response.\u201d Will be displayed.\n\n1.1.9.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 If user presses \u201cYes\u201d button, confirmation message \u201cYour request has been deleted and is no longer active.\n\n1.1.9.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 File Name: when user click on the files the files will get downloaded.\n\n1.1.9.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 File Date: the date when the file is uploaded will be added here.\n\nRefer [001_EnterpriseDataPortal-UseCase-Phase3 v1.0.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS_Support/_layouts/15/Doc.aspx?sourcedoc=%7Bb1f832b2-734e-4816-ac0f-85c8580735b2%7D&action=view&wdAccPdf=0&wdparaid=1C1F2A22] Use case-17",
+    "estimated_hours": 80.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 12.0,
+      "design": 16.0,
+      "development": 38.4,
+      "testing": 12.0,
+      "deployment": 1.6
+    },
+    "method": "ai_extracted",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:29:11.502452",
+    "jira_ticket": "EDP-1496",
+    "description": "File Upload . User Navigates to \u201cAdmin-Upload File\u201d page.\n\n1.1.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Section header: Upload To File Store\n\n1.1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Add files: \u00a0Button\n\nNote: Supporting Document: (Following extensions are allowed .csv, .docx, .xls, .doc, .xlsx, Pdf) (Max file size: 20 MB)\n\n1.1.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Upload: Button\n\nNote: only one file uploaded at a time\n\n1.1.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Table will display 10 records at a time with option to go to next page/last page/first page/previous page.\u00a0\n\n1.1.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: once user clicks on the Upload file button the file gets update in the table column\n\n1.1.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 The column table will be displayed below:\n\n1.1.9.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Delete: if the user clicks on the delete button the file will get deleted\n\n1.1.9.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: when user click on the Delete option the following message will be displayed \u201cAre you sure that you want to delete this record?\u201d with Yes/No buttons will appear for user\u2019s response.\u201d Will be displayed.\n\n1.1.9.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 If user presses \u201cYes\u201d button, confirmation message \u201cYour request has been deleted and is no longer active.\n\n1.1.9.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 File Name: when user click on the files the files will get downloaded.\n\n1.1.9.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 File Date: the date when the file is uploaded will be added here.\n\nRefer [001_EnterpriseDataPortal-UseCase-Phase3 v1.0.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS_Support/_layouts/15/Doc.aspx?sourcedoc=%7Bb1f832b2-734e-4816-ac0f-85c8580735b2%7D&action=view&wdAccPdf=0&wdparaid=1C1F2A22] Use case-17",
+    "estimated_hours": 80.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 12.0,
+      "design": 16.0,
+      "development": 38.4,
+      "testing": 12.0,
+      "deployment": 1.6
+    },
+    "method": "ai_extracted",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:32:54.174472",
+    "jira_ticket": "EDP-1496",
+    "description": "File Upload . User Navigates to \u201cAdmin-Upload File\u201d page.\n\n1.1.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Section header: Upload To File Store\n\n1.1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Add files: \u00a0Button\n\nNote: Supporting Document: (Following extensions are allowed .csv, .docx, .xls, .doc, .xlsx, Pdf) (Max file size: 20 MB)\n\n1.1.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Upload: Button\n\nNote: only one file uploaded at a time\n\n1.1.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Table will display 10 records at a time with option to go to next page/last page/first page/previous page.\u00a0\n\n1.1.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: once user clicks on the Upload file button the file gets update in the table column\n\n1.1.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 The column table will be displayed below:\n\n1.1.9.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Delete: if the user clicks on the delete button the file will get deleted\n\n1.1.9.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: when user click on the Delete option the following message will be displayed \u201cAre you sure that you want to delete this record?\u201d with Yes/No buttons will appear for user\u2019s response.\u201d Will be displayed.\n\n1.1.9.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 If user presses \u201cYes\u201d button, confirmation message \u201cYour request has been deleted and is no longer active.\n\n1.1.9.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 File Name: when user click on the files the files will get downloaded.\n\n1.1.9.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 File Date: the date when the file is uploaded will be added here.\n\nRefer [001_EnterpriseDataPortal-UseCase-Phase3 v1.0.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS_Support/_layouts/15/Doc.aspx?sourcedoc=%7Bb1f832b2-734e-4816-ac0f-85c8580735b2%7D&action=view&wdAccPdf=0&wdparaid=1C1F2A22] Use case-17",
+    "estimated_hours": 41.4,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 6.21,
+      "design": 8.28,
+      "development": 19.87,
+      "testing": 6.21,
+      "deployment": 0.83
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:35:35.921960",
+    "jira_ticket": "EDP-1819",
+    "description": "ISBN Request & Queue. Link for the use case:[001_EnterpriseDataPortal-UseCase-Phase3 (Excl Vendor) v1.2.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS_Support/Shared%20Documents/Enterprise%20Data%20Portal/02%20Requirement%20Docs/Phase-3%20Requirements/UC%20Documents%20for%20Phase%203%20(Excl%20Vendor)/001_EnterpriseDataPortal-UseCase-Phase3%20(Excl%20Vendor)%20v1.2.docx?d=we91f505835964391a3aae63ab82ea104&csf=1&web=1&e=rC3IEQ]\n\n*14.1\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name*: Create ISBN Request\n\n*1.2.\u00a0\u00a0 Use Case description*: User should be able to Create ISBN Request after login to the page\n\n*1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality*:\u00a0 ISBN_User\n\n*1.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions*: The user has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*1.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition*:\n\n1.5.1.User can successfully view Create ISBN Request\n\n1.5.2.User can successfully Submit Create ISBN Request.\n\n*1.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition*:\n\n1.6.1.User can\u2019t view Create ISBN Request page.\n\n1.6.2.User can\u2019t Submit Create ISBN Request.\n\n*1.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors*:\n\n1.7.1.Authorized EDP users\n\n1.7.2.Enterprise Data portal system\n\n*1.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger*: User click on ISBN Page by using Navigation menu or Quick Launch options.\n\n*1.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow 1*:\n\n1.9.1.User clicks on \u201cISBN\u201d link in left navigation menu.\n\n1.9.2.System will display following links under \u201cPlease select\u2026\u201d\n\n1.9.2.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cCreate ISBN Request\u201d\n\n1.9.2.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cCancel ISBN Request\u201d\n\n1.9.2.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cISBN Search\u201d\n\n1.9.2.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cISBN Admin\u201d\u00a0",
+    "estimated_hours": 80.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 12.0,
+      "design": 16.0,
+      "development": 38.4,
+      "testing": 12.0,
+      "deployment": 1.6
+    },
+    "method": "ai_extracted",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:35:53.050770",
+    "jira_ticket": "EDP-1819",
+    "description": "ISBN Request & Queue. Link for the use case:[001_EnterpriseDataPortal-UseCase-Phase3 (Excl Vendor) v1.2.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS_Support/Shared%20Documents/Enterprise%20Data%20Portal/02%20Requirement%20Docs/Phase-3%20Requirements/UC%20Documents%20for%20Phase%203%20(Excl%20Vendor)/001_EnterpriseDataPortal-UseCase-Phase3%20(Excl%20Vendor)%20v1.2.docx?d=we91f505835964391a3aae63ab82ea104&csf=1&web=1&e=rC3IEQ]\n\n*14.1\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name*: Create ISBN Request\n\n*1.2.\u00a0\u00a0 Use Case description*: User should be able to Create ISBN Request after login to the page\n\n*1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality*:\u00a0 ISBN_User\n\n*1.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions*: The user has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*1.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition*:\n\n1.5.1.User can successfully view Create ISBN Request\n\n1.5.2.User can successfully Submit Create ISBN Request.\n\n*1.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition*:\n\n1.6.1.User can\u2019t view Create ISBN Request page.\n\n1.6.2.User can\u2019t Submit Create ISBN Request.\n\n*1.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors*:\n\n1.7.1.Authorized EDP users\n\n1.7.2.Enterprise Data portal system\n\n*1.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger*: User click on ISBN Page by using Navigation menu or Quick Launch options.\n\n*1.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow 1*:\n\n1.9.1.User clicks on \u201cISBN\u201d link in left navigation menu.\n\n1.9.2.System will display following links under \u201cPlease select\u2026\u201d\n\n1.9.2.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cCreate ISBN Request\u201d\n\n1.9.2.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cCancel ISBN Request\u201d\n\n1.9.2.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cISBN Search\u201d\n\n1.9.2.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cISBN Admin\u201d\u00a0",
+    "estimated_hours": 80.0,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 12.0,
+      "design": 16.0,
+      "development": 38.4,
+      "testing": 12.0,
+      "deployment": 1.6
+    },
+    "method": "ai_extracted",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:37:50.660627",
+    "jira_ticket": "EDP-1819",
+    "description": "ISBN Request & Queue. Link for the use case:[001_EnterpriseDataPortal-UseCase-Phase3 (Excl Vendor) v1.2.docx|https://wolterskluwer.sharepoint.com/:w:/r/teams/GBS_Support/Shared%20Documents/Enterprise%20Data%20Portal/02%20Requirement%20Docs/Phase-3%20Requirements/UC%20Documents%20for%20Phase%203%20(Excl%20Vendor)/001_EnterpriseDataPortal-UseCase-Phase3%20(Excl%20Vendor)%20v1.2.docx?d=we91f505835964391a3aae63ab82ea104&csf=1&web=1&e=rC3IEQ]\n\n*14.1\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name*: Create ISBN Request\n\n*1.2.\u00a0\u00a0 Use Case description*: User should be able to Create ISBN Request after login to the page\n\n*1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality*:\u00a0 ISBN_User\n\n*1.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions*: The user has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*1.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition*:\n\n1.5.1.User can successfully view Create ISBN Request\n\n1.5.2.User can successfully Submit Create ISBN Request.\n\n*1.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition*:\n\n1.6.1.User can\u2019t view Create ISBN Request page.\n\n1.6.2.User can\u2019t Submit Create ISBN Request.\n\n*1.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors*:\n\n1.7.1.Authorized EDP users\n\n1.7.2.Enterprise Data portal system\n\n*1.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger*: User click on ISBN Page by using Navigation menu or Quick Launch options.\n\n*1.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow 1*:\n\n1.9.1.User clicks on \u201cISBN\u201d link in left navigation menu.\n\n1.9.2.System will display following links under \u201cPlease select\u2026\u201d\n\n1.9.2.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cCreate ISBN Request\u201d\n\n1.9.2.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cCancel ISBN Request\u201d\n\n1.9.2.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cISBN Search\u201d\n\n1.9.2.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Link for \u201cISBN Admin\u201d\u00a0",
+    "estimated_hours": 30.51,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 4.58,
+      "design": 6.1,
+      "development": 14.64,
+      "testing": 4.58,
+      "deployment": 0.61
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:39:05.161491",
+    "jira_ticket": "EDP-1805",
+    "description": "ISBN Cancel. *1.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name:* Cancel ISBN Request\n\n*1.2.\u00a0\u00a0 Use Case description*: User should be able to navigate to Cancel ISBN queue pages after login\n\n*1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality*: ISBN_User\n\n*1.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions*: The user has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*1.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition*:\n\n1.5.1.User can successfully view Cancel ISBN Queue page.\n\n1.5.2.User can successfully Cancel ISBN request.\n\n*1.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition*:\n\n1.6.1.User can\u2019t view Cancel ISBN Queue page.\n\n1.6.2.User can\u2019t successfully Cancel ISBN request.\n\n*1.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors*:\n\n1.7.1.Authorized EDP users\n\n1.7.2.Enterprise Data portal system\n\n*1.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger*: User clicks on the Cancel ISBN queue page using the navigation/quick launch menu.\n\n*1.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow 1*:\n\n1.9.1.User Navigates to \u201cCancel ISBN\u201d page.\n\nSection header: \u201cCancel ISBN Request",
+    "estimated_hours": 32.6,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 21.0,
+      "testing": 8.0,
+      "deployment": 3.6
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:41:37.068259",
+    "jira_ticket": "EDP-1833",
+    "description": "ISBN Admin. ISBN Admin\n\n*1.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name*: ISBN Admin Page\n\n*1.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use Case description*: User should be able to navigate to ISBN Admin page after login\n\n*1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality*: ISBN_Admin\n\n*1.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions*: The user has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*1.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition*:\n\n1.5.1.User can successfully view ISBN Admin page.\n\n1.5.2.User can successfully Update or Edit the status of the request for ISBN request.\n\n*1.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition*:\n\n1.6.1.User can\u2019t view ISBN Admin page.\n\n1.6.2.User can\u2019t successfully Update or Edit the status of the request for ISBN request.\n\n*1.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors*:\n\n1.7.1.Authorized EDP users\n\n1.7.2.Enterprise Data portal system\n\n*1.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger*: User clicks on the ISBN Admin page using the navigation/quick launch menu.\n\n*1.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow 1*:\n\n1.9.1.User Navigates to \u201cISBN Admin\u201d page.\n\n1.9.2.Section header: ISBN Administration\n\n1.9.3. Requestor, Product, ISBN, Book Title, Status these radio button will be used to search the request.",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:44:18.726755",
+    "jira_ticket": "EDP-2371",
+    "description": "New User Registration . User Registration form \n\n*19.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name:* New User Registration request\n\n*19.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use Case description:* User should be able to submit new user registration request\n\n*19.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality:* No Role Required\n\n*19.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions:* The user has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*19.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition:*\n\n19.5.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can successfully submit registration\n\n*19.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition:*\n\n19.6.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can\u2019t successfully submit registration\n\n*19.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors:*\n\n19.7.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Enterprise Data portal system\n\n*19.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger:* User Navigates to \u2018New User Registration Form\u2019 page\n\n*19.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow: (New user registration)*\n\n19.9.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 The user will be open the \u201cEDP portal URL\u201d it will be displayed the following options:\n\n19.9.1.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Sign in to Enterprise Data Portal\n\n19.9.1.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Signup for Enterprise Data Portal\n\n19.9.1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Sign in as Manager\n\n19.9.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User needs to click on the \u201cSignup for the Enterprise Data Portal button\u201d\n\n19.9.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 If user is already an EDP user and trying to open registration form we will be showing the following error message: *\"An existing account was found. Please sign in to continue.\"*\n\n19.9.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 If user is not yet registered in EDP and try to Sign in into EDP the following error message will be displayed: *\"Your profile is not yet registered in the Enterprise Data Portal. Please sign up to proceed.\"*",
+    "estimated_hours": 44.6,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 6.69,
+      "design": 8.92,
+      "development": 21.41,
+      "testing": 6.69,
+      "deployment": 0.89
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:46:19.852220",
+    "jira_ticket": "EDP-2395",
+    "description": "Existing User \u2013 Additional Access/Roles Update Request (EDP). Existing User \u2013 Additional Access/Roles Update Request (EDP)\n\n*19.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name:* Existing User Additional Access/Roles Update Request\n\n*19.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use Case description:* User should be able to submit the request for updating their access.\n\n*19.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality:* All EDP Roles should allow accessing this functionality.\n\n*19.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions:* The user has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*19.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition:*\n\n19.5.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can successfully submit additional access request\n\n*19.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition:*\n\n19.6.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can\u2019t successfully submit additional access request\n\n*19.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors:*\n\n19.7.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Authorized/ EDP users.\n\n19.7.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Enterprise Data portal system\n\n*19.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger:* User Navigates to \u2018Account\u2019 page\n\n*19.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow:*\n\n19.9.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User navigates to \u201cAccount\u201d page",
+    "estimated_hours": 37.49,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 5.62,
+      "design": 7.5,
+      "development": 18.0,
+      "testing": 5.62,
+      "deployment": 0.75
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:47:21.456809",
+    "jira_ticket": "EDP-2372",
+    "description": "Manager Approval for New/Change Account Requests. *19.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name:* Manager Approval for User Access Request\n\n*19.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use Case description:* Manager should be able Signup for the Enterprise Data Portal and approve or reject the request\n\n*19.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality:* No role required\n\n*19.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions:* The User has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*19.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition:*\n\n19.5.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can successfully Approve or Reject the request.\n\n*19.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition:*\n\n19.6.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can\u2019t successfully Approve or Reject the request.\n\n*19.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors:*\n\n19.7.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Enterprise Data portal system\n\n*19.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger:* User Navigates to \u201cManager Queue\u201d page\n\n*19.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow: (Manager Queue )*\n\n19.9.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Once Manager logged into Enterprise Data Portal by clicking on \u201cSign in as Manager\u201d\n\n19.9.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: If the user doesn't have any old or new request in the manager queue page and try to sign in Manager then we will be showing this error message \"There is no pending or closed access request to display.\"\n\n19.9.2.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Manger will be moved to \u201cManager Queue\u201d page\n\n19.9.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Following filter options are displayed above the search box in a row\n\n19.9.3.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 UUID\u00a0\n\n19.9.3.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Request Type\n\n19.9.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Manager can also view requests from each queue, following are the filter options based on Queue:\u00a0 Manager Queue, Finance Admin Queue, Master Data Admin Queue, Complete, Cancelled.\n\n19.9.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: Manager can view only their own requests, across all statuses.\n\n19.9.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 System by default display the \u201cUUID\u201d for search box.\n\n19.9.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Following table is displayed with columns: Request Id, Action, First Name, Last Name, Request Type, Request Sub-Type, Status, Last Modified\n\n19.9.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Download CSV option will be appeared on right hand corner (above the table).\n\n19.9.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Table will display 10 records at a time with option to go to next page/last page/first page/previous page.\n\n\u00a0\n\n19.9.10.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Below table following message is displayed \u201cRequest Id is a representation of first 8 characters of UUID.\u201d",
+    "estimated_hours": 61.91,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 9.29,
+      "design": 12.38,
+      "development": 29.71,
+      "testing": 9.29,
+      "deployment": 1.24
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:48:16.549291",
+    "jira_ticket": "EDP-2373",
+    "description": "Admin Approval for User Access Request (EDP) and User Admin. *19.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name:* User Admin\n\n*19.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use Case description:* Admin should be able to update the roles for others and Active ,Inactive and terminated the user\n\n*19.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality:* Admin\n\n*19.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions:* The admin has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*19.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition:*\n\n19.5.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Admin should be able to update the roles of the other users, and Active , Inactive and terminating the user\n\n*19.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition:*\n\n19.6.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Admin should not be able to update the roles of the other users, and Active, Inactive, Terminating the user\n\n*19.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors:*\n\n19.7.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Authorized/ EDP users.\n\n19.7.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Enterprise Data portal system\n\n*19.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger:* Admin log into the Enterprise Data Portal application and navigates to \u201cAdmin\u201d Page\n\n*19.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow: (User Admin)*\n\n19.9.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Admin navigate to \u201cAdmin\u201d page it will be displays following options:\n\n19.9.1.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User Access Approval Queue\n\n19.9.1.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User Admin\n\n19.9.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Admin clicks on the \u201cUser Admin\u201d the following details will be displayed\n\n19.9.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Section header: User Admin\n\n19.9.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Enter User Name: Text Box",
+    "estimated_hours": 42.51,
+    "actual_hours": null,
+    "complexity": "Medium",
+    "phases": {
+      "requirements": 6.38,
+      "design": 8.5,
+      "development": 20.4,
+      "testing": 6.38,
+      "deployment": 0.85
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:49:20.471169",
+    "jira_ticket": "EDP-2374",
+    "description": "Contact. use case for \u201cContact\u201d\n\n*19.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use case name:* Use case for \u2018Contact\u2019\n\n*19.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Use Case description:* User can submit the queries to Master Data Group and Finance team according to request type\n\n*19.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Access required for functionality:* Both users with and without role access can view Contact module.\n\n*19.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Preconditions:* The user has logged into the Enterprise Data portal by providing valid WK Credentials.\n\n*19.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Success End condition:*\n\n19.5.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can successfully view the Contact page.\n\n19.5.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can successfully submit the administrative problems to the respective team.\n\n*19.6.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Failed End condition:*\n\n19.6.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can\u2019t successfully view the Contact page.\n\n19.6.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User can\u2019t successfully submit the administrative problems to the respective team\n\n*19.7.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary actors:*\n\n19.7.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Authorized/ EDP users.\n\n19.7.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Enterprise Data portal system\n\n*19.8.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Trigger:* User login to \u201cContact\u201d page\n\n*19.9.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Primary flow:*\n\n19.9.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 New User\u00e0 The user will be open the \u201cEDP portal URL\u201d it will be displayed the following options :\n\n19.9.1.1.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Sign in to Enterprise Data Portal\n\n19.9.1.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Signup for Enterprise Data Portal\n\n19.9.1.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Sign in as Manager\n\n19.9.2.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 User needs to click on the \u201cSignup for the Enterprise Data Portal button\u201d\n\n19.9.3.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 In the left navigation below the \u201cNew User Registration Request\u201d the \u201cContact\u201d module name will be displayed\n\n19.9.4.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Existing user \u00a0\u00e0 Users can open the Contact page from left navigation menu\n\n19.9.5.\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 Note: The \u201cContact\u201d Module will be displayed below the \u201cMaster Data\u201d Module",
+    "estimated_hours": 23.49,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 3.52,
+      "design": 4.7,
+      "development": 11.28,
+      "testing": 3.52,
+      "deployment": 0.47
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T12:50:25.636522",
+    "jira_ticket": "EDP-2431",
+    "description": "Read-Only role changes for the EDP application. h3. *Update: Read-Only Role Changes Across All Use Cases*\n\n# *Current Setup*\nThe MDC application currently has a single role: *\"Read-Only\"*, which is applied uniformly across all modules.\n# *Upcoming Changes*\nTo better align with module specific access needs, we are introducing *two distinct Read-Only roles*:\n#* *ReadOnly_MasterData* \u2013 applicable to all *Master Data* modules\n#* *ReadOnly_Finance* \u2013 applicable to all *Finance* modules these role will be visible in the Admin form. They are intended only for the Technical team.\n# *Reference Material*\nPlease refer to the ([Read Only Roles for Enterprise Data Portal.pptx|https://wolterskluwer.sharepoint.com/:p:/r/teams/GBS_Support/Shared%20Documents/Enterprise%20Data%20Portal/02%20Requirement%20Docs/Read%20Only%20Roles%20for%20Enterprise%20Data%20Portal.pptx?d=w34024b9dad66479687437a5428a09bde&csf=1&web=1&e=Us80Og]) for a detailed overview of all planned changes ",
+    "estimated_hours": 24.4,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 3.66,
+      "design": 4.88,
+      "development": 11.71,
+      "testing": 3.66,
+      "deployment": 0.49
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T13:04:18.291249",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T13:06:52.334146",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T13:07:10.114091",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T13:09:46.625042",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T13:10:13.829448",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  }
+]
