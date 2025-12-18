@@ -6,11 +6,13 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const jiraNumber = document.getElementById('jiraNumber').value;
+        const jiraNumber = document.getElementById('jiraNumber').value.trim();
         const description = document.getElementById('description').value;
-        const useJira = document.getElementById('useJira').checked;
         const useAI = document.getElementById('useAI').checked;
         const usesAITools = document.getElementById('usesAITools').checked;
+        
+        // Auto-detect if JIRA should be used based on whether a JIRA number is provided
+        const useJira = jiraNumber.length > 0;
         
         // Get selected phases with custom percentages
         const selectedPhases = {
@@ -61,13 +63,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        if (useJira && !jiraNumber.trim()) {
-            showErrorModal('Validation Error', 'Please enter a JIRA number when using JIRA fetch.');
-            return;
-        }
-        
-        if (!useJira && !description.trim()) {
-            showErrorModal('Validation Error', 'Please enter a project description or use JIRA fetch.');
+        if (!jiraNumber && !description.trim()) {
+            showErrorModal('Validation Error', 'Please enter either a JIRA number or a project description.');
             return;
         }
         
@@ -315,11 +312,27 @@ function displayResults(data) {
             
             const row = tbody.insertRow();
             row.className = 'phase-row';
-            row.innerHTML = `
-                <td><strong>${displayName}</strong></td>
-                <td>${parseFloat(phaseHours).toFixed(2)} hours</td>
-                <td>${parseFloat(percentage).toFixed(1)}%</td>
-            `;
+            
+            // Check if this is testing phase and has breakdown
+            if (phase === 'testing' && data.testing_breakdown && Object.keys(data.testing_breakdown).length > 0) {
+                row.style.cursor = 'pointer';
+                row.innerHTML = `
+                    <td><strong>${displayName}</strong> <i class="bi bi-chevron-down" id="testingChevron"></i></td>
+                    <td>${parseFloat(phaseHours).toFixed(2)} hours</td>
+                    <td>${parseFloat(percentage).toFixed(1)}%</td>
+                `;
+                
+                // Add click handler to expand/collapse
+                row.onclick = function() {
+                    toggleTestingBreakdown(data.testing_breakdown, phaseHours);
+                };
+            } else {
+                row.innerHTML = `
+                    <td><strong>${displayName}</strong></td>
+                    <td>${parseFloat(phaseHours).toFixed(2)} hours</td>
+                    <td>${parseFloat(percentage).toFixed(1)}%</td>
+                `;
+            }
             
             phases.push(displayName);
             hours.push(phaseHours);
@@ -357,6 +370,90 @@ function displayResults(data) {
     
     // Scroll to results
     document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function toggleTestingBreakdown(breakdown, totalTestingHours) {
+    const tbody = document.getElementById('phaseBreakdown');
+    const chevron = document.getElementById('testingChevron');
+    const existingBreakdown = document.getElementById('testingBreakdownRow');
+    
+    // Toggle: if already expanded, collapse it
+    if (existingBreakdown) {
+        existingBreakdown.remove();
+        if (chevron) {
+            chevron.className = 'bi bi-chevron-down';
+        }
+        return;
+    }
+    
+    // Change chevron to up
+    if (chevron) {
+        chevron.className = 'bi bi-chevron-up';
+    }
+    
+    // Find the testing row
+    const rows = tbody.getElementsByTagName('tr');
+    let testingRowIndex = -1;
+    for (let i = 0; i < rows.length; i++) {
+        if (rows[i].textContent.includes('Testing & UAT')) {
+            testingRowIndex = i;
+            break;
+        }
+    }
+    
+    if (testingRowIndex === -1) return;
+    
+    // Define testing type descriptions
+    const testingTypes = {
+        'manual': {
+            name: 'Manual Testing',
+            icon: '👤',
+            description: 'Exploratory testing, UI/UX validation'
+        },
+        'automation': {
+            name: 'Automation Development',
+            icon: '🤖',
+            description: 'Writing automated test scripts'
+        },
+        'regression': {
+            name: 'Regression Testing',
+            icon: '🔄',
+            description: 'Existing functionality validation'
+        },
+        'functional': {
+            name: 'Functional Testing',
+            icon: '✅',
+            description: 'Feature validation, acceptance criteria'
+        }
+    };
+    
+    // Create breakdown content
+    let breakdownHTML = '<td colspan="3" class="testing-breakdown-cell"><div class="testing-breakdown-content">';
+    breakdownHTML += '<table class="table table-sm mb-0">';
+    
+    ['manual', 'automation', 'regression', 'functional'].forEach(type => {
+        if (breakdown[type]) {
+            const hours = breakdown[type];
+            const percentage = totalTestingHours > 0 ? ((hours / totalTestingHours) * 100).toFixed(1) : 0;
+            const typeInfo = testingTypes[type];
+            
+            breakdownHTML += `
+                <tr>
+                    <td style="width: 40%;"><span class="ms-3">${typeInfo.icon} ${typeInfo.name}</span></td>
+                    <td style="width: 25%;"><span class="badge bg-info">${hours.toFixed(2)}h</span></td>
+                    <td style="width: 35%;"><small class="text-muted">${typeInfo.description}</small></td>
+                </tr>
+            `;
+        }
+    });
+    
+    breakdownHTML += '</table></div></td>';
+    
+    // Insert breakdown row after testing row
+    const breakdownRow = tbody.insertRow(testingRowIndex + 1);
+    breakdownRow.id = 'testingBreakdownRow';
+    breakdownRow.className = 'testing-breakdown-row';
+    breakdownRow.innerHTML = breakdownHTML;
 }
 
 function displayJiraTimeline(statusHistory, timeInStatus) {

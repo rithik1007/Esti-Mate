@@ -934,5 +934,39 @@
     },
     "method": "ai_powered",
     "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T15:22:00.099804",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
+  },
+  {
+    "timestamp": "2025-12-18T16:05:03.576818",
+    "jira_ticket": "STEPOPS-39143",
+    "description": "WBS Marketing Change (User Registration - Additional Role). If possible, create an additional role \u201cWBS Marketing\u201d to support promotional campaign WBS element maintenance for users who do not require the full WBS suite that includes financial elements.\n\n\n\nThe following sections are applicable for this new role:  \n\n# WBS Marketing Element request \n# WBS Change \"promo code\" option\n# Mass upload the two radio buttons\n## \"Create Promo Code\" \n## \"Assign Pricing to Promo Codes\"",
+    "estimated_hours": 20.099999999999998,
+    "actual_hours": null,
+    "complexity": "Low",
+    "phases": {
+      "requirements": 0,
+      "design": 0,
+      "development": 16.8,
+      "testing": 2.4,
+      "deployment": 0.9
+    },
+    "method": "ai_powered",
+    "accuracy": null
   }
 ]

@@ -15,24 +15,18 @@
                 <h1 class="text-center mb-4">Esti-Mate</h1>
                 
                 <div class="text-center mb-4">
-                    <a href="/ai-workflow" class="btn btn-outline-primary">
-                        <i class="bi bi-robot"></i> AI-Powered Workflow
+                    <a href="/bulk-estimate-page" class="btn btn-primary">
+                        <i class="bi bi-list-check"></i> Bulk Estimation
                     </a>
                 </div>
-                
                 
                 <div class="card">
                     <div class="card-body">
                         <form id="estimateForm">
                             <div class="mb-3">
-                                <label for="jiraNumber" class="form-label">JIRA Number</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="jiraNumber" placeholder="e.g., PROJ-123">
-                                    <div class="input-group-text">
-                                        <input class="form-check-input" type="checkbox" id="useJira">
-                                        <label class="form-check-label ms-1" for="useJira">Fetch from JIRA</label>
-                                    </div>
-                                </div>
+                                <label for="jiraNumber" class="form-label">JIRA Number (Optional)</label>
+                                <input type="text" class="form-control" id="jiraNumber" placeholder="e.g., EDP-679">
+                                <div class="form-text">If provided, details will be automatically fetched from JIRA</div>
                             </div>
                             
                             <div class="mb-3">

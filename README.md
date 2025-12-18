@@ -24,7 +24,9 @@ An intelligent web application that provides accurate project time estimates usi
 ## 📋 Prerequisites
 
 - Python 3.7 or higher
-- Azure OpenAI API access (optional, for AI features)
+- **AI Provider** (choose one):
+  - Amazon Q Developer (recommended - codebase-aware)
+  - Azure OpenAI API access
 - JIRA API token (optional, for JIRA integration)
 
 ## 🛠️ Installation
@@ -64,13 +66,24 @@ JIRA_BASE_URL=https://your-company.atlassian.net
 JIRA_EMAIL=your-email@company.com
 JIRA_API_TOKEN=your-jira-api-token
 
-# Azure OpenAI Configuration
+# AI Provider Selection (amazon_q or azure_openai)
+AI_PROVIDER=amazon_q
+
+# Amazon Q Configuration (Recommended)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AMAZON_Q_APP_ID=your-app-id
+
+# OR Azure OpenAI Configuration
 AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
 AZURE_OPENAI_API_KEY=your-api-key
 
 # Flask Configuration
 SECRET_KEY=your-secret-key
 ```
+
+**Quick Start with Amazon Q:** See [QUICK_START_AMAZON_Q.md](QUICK_START_AMAZON_Q.md)
 
 ## 🎯 Usage
 
