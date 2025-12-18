@@ -312,14 +312,31 @@ code_generator = AICodeGenerator(
 )
 codebase_analyzer = CodebaseAnalyzer()
 approval_workflow = DesignApprovalWorkflow()
+# Determine AI provider
+ai_provider = os.getenv('AI_PROVIDER', 'azure_openai')
+
+# Prepare AWS config for Amazon Q
+aws_config = {
+    'region': os.getenv('AWS_REGION'),
+    'access_key': os.getenv('AWS_ACCESS_KEY_ID'),
+    'secret_key': os.getenv('AWS_SECRET_ACCESS_KEY'),
+    'app_id': os.getenv('AMAZON_Q_APP_ID')
+}
+
 ai_estimator = AIEstimator(
     api_key=os.getenv('AZURE_OPENAI_API_KEY'),
-    azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT')
+    azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
+    ai_provider=ai_provider,
+    aws_config=aws_config if ai_provider == 'amazon_q' else None
 )
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/bulk-estimate-page')
+def bulk_estimate_page():
+    return render_template('bulk_estimate.html')
 
 @app.route('/ai-workflow')
 def ai_workflow():
@@ -349,20 +366,29 @@ def estimate():
             return jsonify({'error': 'No data received'}), 400
             
         description = data.get('description', '')
-        jira_number = data.get('jira_number', '')
-        use_jira = data.get('use_jira', False)
+        jira_number = data.get('jira_number', '').strip()
+        
+        # Auto-detect: if JIRA number is provided, try to fetch from JIRA
+        use_jira = bool(jira_number)
         
         jira_data = None
-        if use_jira and jira_number:
+        if jira_number:
             try:
+                # Try to fetch from JIRA
                 jira_data = jira_client.get_ticket_details(jira_number)
                 description = f"{jira_data['summary']}. {jira_data['description']}"
                 jira_number = jira_data['key']
             except Exception as e:
-                return jsonify({
-                    'error': str(e),
-                    'error_type': 'jira_error'
-                }), 400
+                # If JIRA fetch fails but description is provided, continue with description
+                if description:
+                    print(f"DEBUG - JIRA fetch failed, using provided description: {e}")
+                    jira_data = None
+                else:
+                    # If no description and JIRA fails, return error
+                    return jsonify({
+                        'error': str(e),
+                        'error_type': 'jira_error'
+                    }), 400
         
         if not description:
             return jsonify({'error': 'Description is required'}), 400
@@ -473,7 +499,8 @@ def estimate():
                 'ai_reasoning': ai_result.get('reasoning', ''),
                 'risk_factors': ai_result.get('risk_factors', []),
                 'custom_phase_names': custom_phases,
-                'historical_analysis': historical_analysis
+                'historical_analysis': historical_analysis,
+                'testing_breakdown': ai_result.get('testing_breakdown', {})
             }
             
             if jira_data:
@@ -687,6 +714,140 @@ def update_actual_hours():
         else:
             return jsonify({'error': 'Ticket not found in estimation history'}), 404
             
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/bulk-estimate', methods=['POST'])
+def bulk_estimate():
+    """Estimate multiple JIRA tickets at once"""
+    try:
+        data = request.get_json()
+        ticket_numbers = data.get('ticket_numbers', [])
+        use_ai = data.get('use_ai', False)
+        uses_ai_tools = data.get('uses_ai_tools', False)
+        
+        if not ticket_numbers:
+            return jsonify({'error': 'No ticket numbers provided'}), 400
+        
+        results = []
+        
+        for ticket_number in ticket_numbers:
+            try:
+                # Fetch JIRA data
+                jira_data = jira_client.get_ticket_details(ticket_number.strip())
+                description = f"{jira_data['summary']}. {jira_data['description']}"
+                
+                # Add AI tools flag
+                jira_data['uses_ai_tools'] = uses_ai_tools
+                
+                # Estimate
+                if use_ai:
+                    estimation = ai_estimator.estimate_with_ai(description, jira_data)
+                else:
+                    estimation = estimator.estimate_project(description, ticket_number, jira_data)
+                
+                # Get release/fix version
+                release = 'N/A'
+                if jira_data.get('fix_versions'):
+                    release = jira_data['fix_versions'][0]['name']
+                
+                results.append({
+                    'ticket': ticket_number.strip(),
+                    'release': release,
+                    'complexity': estimation.get('complexity', 'Medium'),
+                    'issue_type': jira_data.get('issue_type', 'Unknown'),
+                    'total_hours': estimation.get('total_hours', 0),
+                    'ai_confidence': estimation.get('ai_confidence', estimation.get('confidence', 0)),
+                    'ai_estimate': 'Y' if use_ai else 'N',
+                    'ai_tools': 'Y' if uses_ai_tools else 'N',
+                    'phases': estimation.get('phases', {}),
+                    'status': 'success'
+                })
+                
+            except Exception as e:
+                results.append({
+                    'ticket': ticket_number.strip(),
+                    'status': 'error',
+                    'error': str(e)
+                })
+        
+        return jsonify({'results': results})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/export-excel', methods=['POST'])
+def export_excel():
+    """Export bulk estimates to Excel"""
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment
+        from io import BytesIO
+        from flask import send_file
+        
+        data = request.get_json()
+        results = data.get('results', [])
+        
+        if not results:
+            return jsonify({'error': 'No results to export'}), 400
+        
+        # Create workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Estimation Report"
+        
+        # Headers
+        headers = [
+            'Jira ticket', 'Release', 'Complexity', 'Issue Type', 'Total Estd. Hrs',
+            'AI Confidence', 'AI Estimate', 'AI Tool Present', 'Requirement',
+            'Design', 'Development', 'Testing', 'Deployment'
+        ]
+        
+        # Style headers
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF")
+        
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+        
+        # Add data
+        for row_idx, result in enumerate(results, 2):
+            if result.get('status') == 'success':
+                phases = result.get('phases', {})
+                
+                ws.cell(row=row_idx, column=1, value=result.get('ticket', ''))
+                ws.cell(row=row_idx, column=2, value=result.get('release', 'N/A'))
+                ws.cell(row=row_idx, column=3, value=result.get('complexity', 'Medium'))
+                ws.cell(row=row_idx, column=4, value=result.get('issue_type', 'Unknown'))
+                ws.cell(row=row_idx, column=5, value=round(result.get('total_hours', 0), 2))
+                ws.cell(row=row_idx, column=6, value=f"{result.get('ai_confidence', 0)}%")
+                ws.cell(row=row_idx, column=7, value=result.get('ai_estimate', 'N'))
+                ws.cell(row=row_idx, column=8, value=result.get('ai_tools', 'N'))
+                ws.cell(row=row_idx, column=9, value=round(phases.get('requirements', 0), 2))
+                ws.cell(row=row_idx, column=10, value=round(phases.get('design', 0), 2))
+                ws.cell(row=row_idx, column=11, value=round(phases.get('development', 0), 2))
+                ws.cell(row=row_idx, column=12, value=round(phases.get('testing', 0), 2))
+                ws.cell(row=row_idx, column=13, value=round(phases.get('deployment', 0), 2))
+        
+        # Adjust column widths
+        for col in range(1, 14):
+            ws.column_dimensions[chr(64 + col)].width = 15
+        
+        # Save to BytesIO
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='estimation_report.xlsx'
+        )
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

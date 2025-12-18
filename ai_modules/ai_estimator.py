@@ -4,21 +4,35 @@ import os
 import hashlib
 from typing import Dict, Any
 from .learning_system import EstimationLearningSystem
+from .amazon_q_estimator import AmazonQEstimator
 
 class AIEstimator:
-    def __init__(self, api_key: str = None, azure_endpoint: str = None):
+    def __init__(self, api_key: str = None, azure_endpoint: str = None, 
+                 ai_provider: str = 'azure_openai', aws_config: Dict = None):
         self.api_key = api_key
         self.azure_endpoint = azure_endpoint
+        self.ai_provider = ai_provider
         self.client = None
+        self.amazon_q = None
         self.cache = {}  # Cache for consistent results
         self.learning_system = EstimationLearningSystem()
         
-        if api_key and azure_endpoint:
+        # Initialize based on provider
+        if ai_provider == 'amazon_q' and aws_config:
+            self.amazon_q = AmazonQEstimator(
+                aws_region=aws_config.get('region'),
+                aws_access_key=aws_config.get('access_key'),
+                aws_secret_key=aws_config.get('secret_key'),
+                app_id=aws_config.get('app_id')
+            )
+            print(f"DEBUG - Using Amazon Q for estimation")
+        elif api_key and azure_endpoint:
             self.client = AzureOpenAI(
                 api_key=api_key,
                 api_version="2024-02-15-preview",
                 azure_endpoint=azure_endpoint
             )
+            print(f"DEBUG - Using Azure OpenAI for estimation")
     
     def estimate_with_ai(self, description: str, jira_data: Dict = None) -> Dict:
         """Use AI to estimate project complexity and hours"""
@@ -31,20 +45,35 @@ class AIEstimator:
             print("DEBUG - Returning cached result for consistent estimation")
             return self.cache[cache_key]
         
-        print(f"DEBUG - AI Estimator called with API key: {bool(self.api_key)}")
-        print(f"DEBUG - API key length: {len(self.api_key) if self.api_key else 0}")
-        print(f"DEBUG - Azure endpoint: {self.azure_endpoint}")
-        print(f"DEBUG - Client initialized: {bool(self.client)}")
+        print(f"DEBUG - AI Provider: {self.ai_provider}")
+        print(f"DEBUG - Amazon Q available: {bool(self.amazon_q)}")
+        print(f"DEBUG - Azure OpenAI available: {bool(self.client)}")
         
-        if not self.api_key or not self.azure_endpoint or not self.client:
-            print("DEBUG - Missing credentials, using fallback estimation")
-            # Fallback to rule-based estimation
+        # Try Amazon Q first if configured
+        if self.ai_provider == 'amazon_q' and self.amazon_q:
+            try:
+                print("DEBUG - Calling Amazon Q for estimation...")
+                estimation = self.amazon_q.estimate_with_amazon_q(description, jira_data)
+                
+                if estimation:
+                    # Apply all adjustments
+                    estimation = self._apply_all_adjustments(estimation, jira_data)
+                    self.cache[cache_key] = estimation
+                    return estimation
+                else:
+                    print("DEBUG - Amazon Q returned no result, falling back")
+            except Exception as e:
+                print(f"DEBUG - Amazon Q failed: {e}, falling back")
+        
+        # Try Azure OpenAI
+        if not self.client:
+            print("DEBUG - No AI provider available, using fallback estimation")
             result = self._fallback_estimation(description, jira_data)
             self.cache[cache_key] = result
             return result
         
         try:
-            print("DEBUG - Calling FAB API for estimation...")
+            print("DEBUG - Calling Azure OpenAI for estimation...")
             # Prepare context for AI
             context = self._build_estimation_context(description, jira_data)
             
@@ -54,6 +83,7 @@ class AIEstimator:
             
             # Parse and validate AI response
             estimation = self._parse_ai_response(ai_response, jira_data)
+            estimation = self._apply_all_adjustments(estimation, jira_data)
             
             # Cache the result
             self.cache[cache_key] = estimation
@@ -580,6 +610,73 @@ class AIEstimator:
             print(f"DEBUG - Historical adjustment: {original_hours}h -> {adjusted_hours}h (factor: {adjustment_factor})")
         
         return estimation
+    
+    def _apply_all_adjustments(self, estimation: Dict, jira_data: Dict = None) -> Dict:
+        """Apply all intelligent adjustments to estimation"""
+        
+        # Apply adjustments in order
+        estimation = self._apply_blackduck_capping(estimation, jira_data)
+        estimation = self._apply_competitive_capping(estimation, jira_data)
+        estimation = self._apply_intelligent_cross_dependency_analysis(estimation, jira_data)
+        estimation = self._apply_cross_dependency_overhead(estimation, jira_data)
+        estimation = self._apply_historical_adjustment(estimation, jira_data)
+        estimation = self._apply_ai_tools_efficiency(estimation, jira_data)
+        
+        # Format decimal places
+        estimation['total_hours'] = round(float(estimation['total_hours']), 2)
+        for phase, hours in estimation.get('phases', {}).items():
+            estimation['phases'][phase] = round(float(hours), 2)
+        
+        # Calculate testing breakdown
+        testing_hours = estimation.get('phases', {}).get('testing', 0)
+        if testing_hours > 0:
+            complexity = estimation.get('complexity', 'Medium')
+            estimation['testing_breakdown'] = self._calculate_testing_breakdown(testing_hours, complexity)
+        
+        # Calculate confidence
+        estimation['ai_confidence'] = self._calculate_reliable_confidence(estimation, jira_data)
+        estimation['estimation_method'] = estimation.get('estimation_method', 'ai_powered')
+        
+        # Apply learning improvements
+        estimation = self.learning_system.get_improved_estimate(estimation)
+        
+        return estimation
+    
+    def _calculate_testing_breakdown(self, testing_hours: float, complexity: str) -> Dict:
+        """Break down testing hours into Manual, Automation, Regression, and Functional"""
+        
+        # Default distribution based on complexity
+        if complexity == 'High':
+            # High complexity: More automation and regression
+            breakdown = {
+                'manual': 0.25,      # 25% Manual testing
+                'automation': 0.35,  # 35% Automation development
+                'regression': 0.25,  # 25% Regression testing
+                'functional': 0.15   # 15% Functional testing
+            }
+        elif complexity == 'Medium':
+            # Medium complexity: Balanced approach
+            breakdown = {
+                'manual': 0.30,      # 30% Manual testing
+                'automation': 0.30,  # 30% Automation development
+                'regression': 0.20,  # 20% Regression testing
+                'functional': 0.20   # 20% Functional testing
+            }
+        else:  # Low complexity
+            # Low complexity: More manual, less automation
+            breakdown = {
+                'manual': 0.40,      # 40% Manual testing
+                'automation': 0.20,  # 20% Automation development
+                'regression': 0.20,  # 20% Regression testing
+                'functional': 0.20   # 20% Functional testing
+            }
+        
+        # Calculate hours for each testing type
+        testing_breakdown = {}
+        for test_type, percentage in breakdown.items():
+            testing_breakdown[test_type] = round(testing_hours * percentage, 2)
+        
+        return testing_breakdown
     
     def _apply_ai_tools_efficiency(self, estimation: Dict, jira_data: Dict = None) -> Dict:
         """Apply efficiency gains from AI development tools"""

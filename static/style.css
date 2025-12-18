@@ -394,3 +394,55 @@ label {
     font-size: 0.85rem;
     padding: 0.35rem 0.65rem;
 }
+
+
+/* Testing Breakdown Styling */
+.testing-breakdown-row {
+    background: rgba(13, 202, 240, 0.05) !important;
+    border-left: 3px solid rgba(13, 202, 240, 0.5);
+}
+
+.testing-breakdown-cell {
+    padding: 0.5rem 1rem !important;
+}
+
+.testing-breakdown-content {
+    animation: slideDown 0.3s ease-out;
+}
+
+.testing-breakdown-content .table {
+    background: transparent;
+    border: none;
+}
+
+.testing-breakdown-content .table td {
+    border: none;
+    padding: 0.5rem;
+    vertical-align: middle;
+}
+
+.testing-breakdown-content .badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+}
+
+.phase-row[style*="cursor: pointer"]:hover {
+    background: rgba(13, 202, 240, 0.1) !important;
+}
+
+#testingChevron {
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
